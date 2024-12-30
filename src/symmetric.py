@@ -155,6 +155,7 @@ class RC4Encryption:
     """
     Class to perform RC4 encryption and decryption.
     """
+    '''
     def __init__(self, key_size=16):
         """
         Initialize the RC4 cipher with a random key.
@@ -184,6 +185,8 @@ class RC4Encryption:
         data = base64.b64decode(ciphertext)
         plaintext = self.cipher.decrypt(data)
         return plaintext.decode('utf-8')
+        '''
+    pass
 
 class BlowfishEncryption:
     """

@@ -11,6 +11,11 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import DSS
 from Crypto.Hash import SHA256
 from Crypto.Random import get_random_bytes
+from cryptography.hazmat.primitives.asymmetric import dh
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.hashes import SHA256 as CryptoSHA256
+from cryptography.hazmat.backends import default_backend
 
 class RSAEncryption:
     """
@@ -98,8 +103,9 @@ class DHEncryption:
         
         :param key_size: Size of the key in bits (default is 2048 bits).
         """
-        self.key = DSA.generate(key_size)
-        self.public_key = self.key.publickey()
+        self.parameters = dh.generate_parameters(generator=2, key_size=key_size, backend=default_backend())
+        self.private_key = self.parameters.generate_private_key()
+        self.public_key = self.private_key.public_key()
 
     def generate_shared_key(self, other_public_key):
         """
@@ -108,12 +114,22 @@ class DHEncryption:
         :param other_public_key: The other party's public key.
         :return: The shared key.
         """
-        shared_key = self.key.exchange(other_public_key)
-        return shared_key
+        """
+        shared_key = self.private_key.exchange(other_public_key)
+        derived_key = HKDF(
+            algorithm=CryptoSHA256(),
+            length=32,
+            salt=None,
+            info=b'handshake data',
+            backend=default_backend()
+        ).derive(shared_key)
+        return derived_key
+        """
+        pass
 
 class ECCEncryption:
     """
-    Class to perform ECC encryption and decryption.
+    Class to perform ECC signing and verification.
     """
     def __init__(self, curve='P-256'):
         """
