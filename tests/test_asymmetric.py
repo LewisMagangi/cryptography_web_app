@@ -1,5 +1,5 @@
 import unittest
-from src.assymetric import RSAEncryption, DSAEncryption, DHEncryption, ECCEncryption
+from src.asymmetric import RSAEncryption, DSAEncryption, DHEncryption, ECCEncryption
 
 class TestAsymmetricEncryption(unittest.TestCase):
     """

@@ -17,9 +17,9 @@ class TestSymmetricEncryption(unittest.TestCase):
         Test AES encryption and decryption.
         """
         aes = AESEncryption()
-        ciphertext = aes.encrypt(self.plaintext)
-        decrypted_text = aes.decrypt(ciphertext)
-        self.assertEqual(self.plaintext, decrypted_text)
+        ciphertext, tag, nonce = aes.encrypt(self.plaintext)
+        decrypted_text = aes.decrypt(ciphertext, tag, nonce)
+        self.assertEqual(self.plaintext, decrypted_text.decode('utf-8'))
 
     def test_des_encryption(self):
         """

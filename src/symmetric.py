@@ -17,14 +17,18 @@ class AESEncryption:
     """
     Class to perform AES encryption and decryption.
     """
-    def __init__(self, key_size=32):
+    def __init__(self, key_size=256):
         """
         Initialize the AES cipher with a random key.
         
         :param key_size: Size of the key in bytes (default is 32 bytes for AES-256).
         """
-        self.key = get_random_bytes(key_size)
+        self.key = get_random_bytes(key_size // 8)
         self.cipher = AES.new(self.key, AES.MODE_GCM)
+
+    def pad(self, data):
+        padding_length = 16 - (len(data) % 16)  # Calculate padding length
+        return data + bytes([padding_length]) * padding_length
 
     def encrypt(self, plaintext):
         """
@@ -33,21 +37,28 @@ class AESEncryption:
         :param plaintext: The plaintext to encrypt.
         :return: The base64 encoded ciphertext.
         """
-        ciphertext, tag = self.cipher.encrypt_and_digest(pad(plaintext.encode(), AES.block_size))
-        return base64.b64encode(self.cipher.nonce + tag + ciphertext).decode('utf-8')
+        if isinstance(plaintext, str):
+            plaintext = plaintext.encode('utf-8')  # Convert to bytes if str
+        padded_plaintext = self.pad(plaintext)  # Pad the plaintext
+        cipher = AES.new(self.key, AES.MODE_GCM)
+        ciphertext, tag = cipher.encrypt_and_digest(padded_plaintext)
+        nonce = cipher.nonce
+        return ciphertext, tag, nonce
 
-    def decrypt(self, ciphertext):
+    def unpad(self, data):
+        padding_length = data[-1]  # Last byte indicates padding length
+        return data[:-padding_length]
+
+    def decrypt(self, ciphertext, tag, nonce):
         """
         Decrypt the ciphertext using AES.
         
         :param ciphertext: The base64 encoded ciphertext to decrypt.
         :return: The decrypted plaintext.
         """
-        data = base64.b64decode(ciphertext)
-        nonce, tag, ciphertext = data[:16], data[16:32], data[32:]
         cipher = AES.new(self.key, AES.MODE_GCM, nonce=nonce)
-        plaintext = unpad(cipher.decrypt_and_verify(ciphertext, tag), AES.block_size)
-        return plaintext.decode('utf-8')
+        decrypted_text = cipher.decrypt_and_verify(ciphertext, tag)
+        return self.unpad(decrypted_text)  # Remove padding after decryption
 
 class DESEncryption:
     """

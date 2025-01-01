@@ -38,8 +38,15 @@ class RSAEncryption:
         :param plaintext: The plaintext to encrypt.
         :return: The encrypted ciphertext.
         """
-        ciphertext = self.cipher.encrypt(plaintext.encode())
+        if isinstance(plaintext, str):
+            plaintext = plaintext.encode('utf-8')  # Convert to bytes
+        try:
+            ciphertext = self.cipher.encrypt(plaintext)  # Assign ciphertext
+        except Exception as e:
+            print("Error during encryption:", e)
+            raise
         return ciphertext
+        
 
     def decrypt(self, ciphertext):
         """
