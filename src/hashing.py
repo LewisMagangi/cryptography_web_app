@@ -21,7 +21,9 @@ class SHA1Hash:
         :return: The hash digest.
         """
         h = SHA1.new()
-        h.update(message.encode())
+        if isinstance(message, str):
+            message = message.encode('utf-8')  # Convert to bytes if str
+            h.update(message)
         return h.hexdigest()
 
 class SHA2Hash:
@@ -54,7 +56,9 @@ class SHA2Hash:
         else:
             raise ValueError("Unsupported SHA-2 algorithm")
         
-        h.update(message.encode())
+        if isinstance(message, str):
+            message = message.encode('utf-8')  # Convert to bytes
+            h.update(message)
         return h.hexdigest()
 
 class MD5Hash:
