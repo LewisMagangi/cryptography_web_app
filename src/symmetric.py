@@ -70,6 +70,9 @@ class DESEncryption:
         
         :param key_size: Size of the key in bytes (default is 8 bytes for DES).
         """
+        if key_size != 8:
+            raise ValueError("Key size for DES must be 8bytes.")
+        
         self.key = get_random_bytes(key_size)
         self.cipher = DES.new(self.key, DES.MODE_ECB)
 
@@ -80,8 +83,20 @@ class DESEncryption:
         :param plaintext: The plaintext to encrypt.
         :return: The base64 encoded ciphertext.
         """
-        ciphertext = self.cipher.encrypt(pad(plaintext.encode(), DES.block_size))
-        return base64.b64encode(ciphertext).decode('utf-8')
+        
+        try:
+            # Ensure the plaintext is in bytes
+            if isinstance(plaintext, str):
+                plaintext = plaintext.encode()
+
+            # Perform encryption with padding
+            padded_data = pad(plaintext, DES.block_size)
+            ciphertext = self.cipher.encrypt(padded_data)
+
+            # Encode the ciphertext in base64 and return
+            return base64.b64encode(ciphertext).decode('utf-8')
+        except Exception as e:
+            raise ValueError(f"Encryption failed: {str(e)}")
 
     def decrypt(self, ciphertext):
         """
@@ -90,9 +105,17 @@ class DESEncryption:
         :param ciphertext: The base64 encoded ciphertext to decrypt.
         :return: The decrypted plaintext.
         """
-        data = base64.b64decode(ciphertext)
-        plaintext = unpad(self.cipher.decrypt(data), DES.block_size)
-        return plaintext.decode('utf-8')
+        try:
+            # Ensure the ciphertext is in bytes
+            if isinstance(ciphertext, str):
+                ciphertext = base64.b64decode(ciphertext)
+            else:
+                ciphertext = base64.b64decode(ciphertext.decode())
+
+            plaintext = unpad(self.cipher.decrypt(ciphertext), DES.block_size)
+            return plaintext.decode('utf-8')
+        except Exception as e:
+            raise ValueError(f"Decryption failed: {str(e)}")
 
 class DES3Encryption:
     """
@@ -104,7 +127,11 @@ class DES3Encryption:
         
         :param key_size: Size of the key in bytes (default is 24 bytes for 3DES).
         """
+        if key_size not in [16, 24]:
+            raise ValueError("Key size for DES3 must be 16 or 24 bytes.")
+
         self.key = get_random_bytes(key_size)
+        DES3.adjust_key_parity(self.key)
         self.cipher = DES3.new(self.key, DES3.MODE_ECB)
 
     def encrypt(self, plaintext):
@@ -114,7 +141,10 @@ class DES3Encryption:
         :param plaintext: The plaintext to encrypt.
         :return: The base64 encoded ciphertext.
         """
-        ciphertext = self.cipher.encrypt(pad(plaintext.encode(), DES3.block_size))
+        if isinstance(plaintext, str):
+            plaintext = plaintext.encode()
+
+        ciphertext = self.cipher.encrypt(pad(plaintext, DES3.block_size))
         return base64.b64encode(ciphertext).decode('utf-8')
 
     def decrypt(self, ciphertext):
@@ -124,6 +154,9 @@ class DES3Encryption:
         :param ciphertext: The base64 encoded ciphertext to decrypt.
         :return: The decrypted plaintext.
         """
+        if isinstance(ciphertext, str):
+            ciphertext = ciphertext.encode()
+
         data = base64.b64decode(ciphertext)
         plaintext = unpad(self.cipher.decrypt(data), DES3.block_size)
         return plaintext.decode('utf-8')
@@ -148,7 +181,10 @@ class RC2Encryption:
         :param plaintext: The plaintext to encrypt.
         :return: The base64 encoded ciphertext.
         """
-        ciphertext = self.cipher.encrypt(pad(plaintext.encode(), ARC2.block_size))
+        if isinstance(plaintext, str):
+            plaintext = plaintext.encode()
+
+        ciphertext = self.cipher.encrypt(pad(plaintext, ARC2.block_size))
         return base64.b64encode(ciphertext).decode('utf-8')
 
     def decrypt(self, ciphertext):
@@ -158,6 +194,9 @@ class RC2Encryption:
         :param ciphertext: The base64 encoded ciphertext to decrypt.
         :return: The decrypted plaintext.
         """
+        if isinstance(ciphertext, str):
+            ciphertext = ciphertext.encode()
+
         data = base64.b64decode(ciphertext)
         plaintext = unpad(self.cipher.decrypt(data), ARC2.block_size)
         return plaintext.decode('utf-8')
@@ -166,7 +205,6 @@ class RC4Encryption:
     """
     Class to perform RC4 encryption and decryption.
     """
-    '''
     def __init__(self, key_size=16):
         """
         Initialize the RC4 cipher with a random key.
@@ -183,7 +221,9 @@ class RC4Encryption:
         :param plaintext: The plaintext to encrypt.
         :return: The base64 encoded ciphertext.
         """
-        ciphertext = self.cipher.encrypt(plaintext.encode())
+        if isinstance(plaintext, str):
+            plaintext = plaintext.encode() 
+        ciphertext = self.cipher.encrypt(plaintext)
         return base64.b64encode(ciphertext).decode('utf-8')
 
     def decrypt(self, ciphertext):
@@ -196,8 +236,6 @@ class RC4Encryption:
         data = base64.b64decode(ciphertext)
         plaintext = self.cipher.decrypt(data)
         return plaintext.decode('utf-8')
-        '''
-    pass
 
 class BlowfishEncryption:
     """
@@ -219,7 +257,9 @@ class BlowfishEncryption:
         :param plaintext: The plaintext to encrypt.
         :return: The base64 encoded ciphertext.
         """
-        ciphertext = self.cipher.encrypt(pad(plaintext.encode(), Blowfish.block_size))
+        if isinstance(plaintext, str):  # Check if it's a string
+            plaintext = plaintext.encode()
+        ciphertext = self.cipher.encrypt(pad(plaintext, Blowfish.block_size))
         return base64.b64encode(ciphertext).decode('utf-8')
 
     def decrypt(self, ciphertext):

@@ -121,7 +121,6 @@ class DHEncryption:
         :param other_public_key: The other party's public key.
         :return: The shared key.
         """
-        """
         shared_key = self.private_key.exchange(other_public_key)
         derived_key = HKDF(
             algorithm=CryptoSHA256(),
@@ -131,8 +130,6 @@ class DHEncryption:
             backend=default_backend()
         ).derive(shared_key)
         return derived_key
-        """
-        pass
 
 class ECCEncryption:
     """
