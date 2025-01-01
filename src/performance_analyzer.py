@@ -1,4 +1,5 @@
 import os
+import csv
 import sys
 import psutil
 import time
@@ -121,6 +122,7 @@ class PerformanceAnalyzer:
 
         return [os.path.join(data_dir, file) for file in os.listdir(data_dir) if file.endswith(".txt")]
 
+    
     def analyze_algorithm(self, algo_name, algo_class, data, key_size=None):
         """
         Analyze the performance of a specific algorithm with given data.
@@ -147,7 +149,6 @@ class PerformanceAnalyzer:
             else:
                 algo_instance = algo_class(key_size) if key_size else algo_class()
 
-
             if algo_name in self.encryption_algorithms:
                 encrypted_data = algo_instance.encrypt(data)  # For encryption algorithms
             elif algo_name in self.signing_algorithms:
@@ -159,40 +160,13 @@ class PerformanceAnalyzer:
 
                 # Pass the other party's public key (which is a DHPublicKey object) to generate the shared key
                 shared_key = algo_instance.generate_shared_key(other_party_public_key)
-                return shared_key
+                # Ensure shared_key is not returned here, as it's not needed for performance metrics
 
             metrics.record_iteration(start_time, start_cpu, start_ram)
 
+        # Return the averages as a dictionary
         return metrics.get_averages()
 
-    def save_results(self, results):
-        """
-        Save the results to a CSV file, updating existing entries if needed.
-
-        Args:
-            results (list): A list of dictionaries containing performance results.
-        """
-        if os.path.exists(self.results_path):
-            df = pd.read_csv(self.results_path)
-        else:
-            df = pd.DataFrame(columns=["algorithm", "data_size", "iterations", "key_size", "avg_time", "avg_cpu", "avg_ram"])
-
-        for result in results:
-            # Update existing entries or append new ones
-            mask = (
-                (df["algorithm"] == result["algorithm"]) &
-                (df["data_size"] == result["data_size"]) &
-                (df["iterations"] == result["iterations"]) &
-                (df["key_size"] == result["key_size"])
-            )
-            if mask.any():
-                df.loc[mask, ["avg_time", "avg_cpu", "avg_ram"]] = [
-                    result["avg_time"], result["avg_cpu"], result["avg_ram"]
-                ]
-            else:
-                df = df.append(result, ignore_index=True)
-
-        df.to_csv(self.results_path, index=False)
 
     def analyze_performance(self, iterations=DEFAULT_ITERATIONS, key_size=DEFAULT_KEYSIZE):
         """
@@ -207,11 +181,11 @@ class PerformanceAnalyzer:
         for algo_name, algo_class in self.algorithms.items():
             data_files = self.get_data_files(algo_name)
             for data_path in data_files:
-
                 with open(data_path, "rb") as file:
                     data = file.read()
 
                 averages = self.analyze_algorithm(algo_name, algo_class, data, key_size)
+                # Make sure to include the required performance data along with the averages
                 results.append({
                     "algorithm": algo_name,
                     "data_size": os.path.basename(data_path),
@@ -220,8 +194,67 @@ class PerformanceAnalyzer:
                     **averages,
                 })
 
-        self.save_results(results)
+            self.save_results(results)
 
+    def save_results(self, results):
+        """
+        Save the performance results to a CSV file, updating existing entries if necessary.
+
+        Args:
+            results (list): A list of result dictionaries containing algorithm, data_size, key_size, iterations, cpu_usage, and time_usage.
+        """
+        output_path = "./data/results/performance_data.csv"
+        updated_data = []
+
+        # Load existing data
+        if os.path.isfile(output_path):
+            with open(output_path, mode="r", newline="") as csv_file:
+                reader = csv.DictReader(csv_file)
+                updated_data = list(reader)
+
+        # Convert existing data into a dictionary for easy lookup
+        existing_data = {
+            (row["algorithm"], row["data_size"], row["key_size"], row["iterations"]): row
+            for row in updated_data
+        }
+
+        # Process new results
+        for result in results:
+            # Extract file size without path and extension (e.g., 1MB instead of 1MB.txt)
+            data_size = os.path.splitext(os.path.basename(result["data_size"]))[0]  # Remove extension
+
+            unique_key = (
+                result["algorithm"],
+                data_size,
+                str(result["key_size"]),
+                str(result["iterations"]),
+            )
+
+            if unique_key in existing_data:
+                # Update existing entry with the new average metrics
+                existing_data[unique_key].update({
+                    "avg_cpu": result["avg_cpu"],
+                    "avg_time": result["avg_time"],
+                    "avg_ram": result["avg_ram"],
+                })
+            else:
+                # Add new entry
+                existing_data[unique_key] = {
+                    "algorithm": result["algorithm"],
+                    "data_size": data_size,
+                    "iterations": result["iterations"],
+                    "key_size": result["key_size"],
+                    "avg_cpu": result["avg_cpu"],
+                    "avg_time": result["avg_time"],
+                    "avg_ram": result["avg_ram"],
+                }
+
+        # Write back to the CSV file
+        with open(RESULTS_PATH, mode="w", newline="") as csv_file:
+            fieldnames = ["algorithm", "data_size", "iterations", "key_size", "avg_cpu", "avg_time", "avg_ram"]
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(existing_data.values())
 
 # Main execution
 if __name__ == "__main__":
