@@ -5,9 +5,9 @@ import psutil
 import time
 import pandas as pd
 from memory_profiler import memory_usage
-from src.symmetric import AESEncryption, DESEncryption, DES3Encryption, RC2Encryption, RC4Encryption, BlowfishEncryption
-from src.asymmetric import RSAEncryption, DSAEncryption, DHEncryption, ECCEncryption
-from src.hashing import SHA1Hash, SHA2Hash, MD5Hash, HMACHash
+from symmetric import AESEncryption, DESEncryption, DES3Encryption, RC2Encryption, RC4Encryption, BlowfishEncryption
+from asymmetric import RSAEncryption, DSAEncryption, DHEncryption, ECCEncryption
+from hashing import SHA1Hash, SHA2Hash, MD5Hash, HMACHash
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -307,17 +307,6 @@ class PerformanceAnalyzer:
             "avg_time": algorithm.execution_time,
             "avg_ram": avg_ram
         })
-
-    def analyze_performance(self):
-        algorithms = [AESEncryption(), DESEncryption(), RSAEncryption(), SHA1Hash(), RSASign(), DSAEncryption()]
-        data_sizes = ["1MB", "10MB", "50MB"]
-        iterations = 2
-
-        for algorithm in algorithms:
-            for data_size in data_sizes:
-                self.collect_performance_data(algorithm, data_size, iterations, None)
-
-        self.save_results()
 
     def load_data(self, data_size):
         """
