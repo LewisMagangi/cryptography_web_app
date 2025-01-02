@@ -11,6 +11,7 @@ class TestSymmetricEncryption(unittest.TestCase):
         Set up a common plaintext message for all tests.
         """
         self.plaintext = "This is a test message."
+        self.plaintext_bytes = self.plaintext.encode('utf-8')
 
     def test_aes_encryption(self):
         """
@@ -19,7 +20,7 @@ class TestSymmetricEncryption(unittest.TestCase):
         aes = AESEncryption()
         ciphertext, tag, nonce = aes.encrypt(self.plaintext)
         decrypted_text = aes.decrypt(ciphertext, tag, nonce)
-        self.assertEqual(self.plaintext, decrypted_text.decode('utf-8'))
+        self.assertEqual(self.plaintext, decrypted_text)
 
     def test_des_encryption(self):
         """
@@ -51,13 +52,11 @@ class TestSymmetricEncryption(unittest.TestCase):
     def test_rc4_encryption(self):
         """
         Test RC4 encryption and decryption.
-        
+        """
         rc4 = RC4Encryption()
         ciphertext = rc4.encrypt(self.plaintext)
         decrypted_text = rc4.decrypt(ciphertext)
         self.assertEqual(self.plaintext, decrypted_text)
-        """
-        pass
 
     def test_blowfish_encryption(self):
         """

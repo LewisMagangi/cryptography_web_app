@@ -9,56 +9,74 @@ RC4
 Blowfish
 """
 from Crypto.Cipher import AES, DES, DES3, ARC2, ARC4, Blowfish
-from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 import base64
+import time
 
 class AESEncryption:
     """
     Class to perform AES encryption and decryption.
     """
-    def __init__(self, key_size=256):
+    def __init__(self, key_size=16):
         """
         Initialize the AES cipher with a random key.
         
-        :param key_size: Size of the key in bytes (default is 32 bytes for AES-256).
+        :param key_size: Size of the key in bytes (default is 16 bytes for AES-128).
         """
-        self.key = get_random_bytes(key_size // 8)
-        self.cipher = AES.new(self.key, AES.MODE_GCM)
-
-    def pad(self, data):
-        padding_length = 16 - (len(data) % 16)  # Calculate padding length
-        return data + bytes([padding_length]) * padding_length
+        self.key = b'Sixteen byte key'
+        self.name = "AESEncryption"
+        self.execution_time = 0
 
     def encrypt(self, plaintext):
         """
-        Encrypt the plaintext using AES.
+        Encrypt the plaintext using AES-GCM.
         
         :param plaintext: The plaintext to encrypt.
-        :return: The base64 encoded ciphertext.
+        :return: The ciphertext, tag, and nonce.
         """
         if isinstance(plaintext, str):
-            plaintext = plaintext.encode('utf-8')  # Convert to bytes if str
-        padded_plaintext = self.pad(plaintext)  # Pad the plaintext
+            plaintext = plaintext.encode('utf-8')
         cipher = AES.new(self.key, AES.MODE_GCM)
-        ciphertext, tag = cipher.encrypt_and_digest(padded_plaintext)
-        nonce = cipher.nonce
-        return ciphertext, tag, nonce
-
-    def unpad(self, data):
-        padding_length = data[-1]  # Last byte indicates padding length
-        return data[:-padding_length]
+        ciphertext, tag = cipher.encrypt_and_digest(plaintext)
+        return base64.b64encode(ciphertext).decode('utf-8'), base64.b64encode(tag).decode('utf-8'), base64.b64encode(cipher.nonce).decode('utf-8')
 
     def decrypt(self, ciphertext, tag, nonce):
         """
-        Decrypt the ciphertext using AES.
+        Decrypt the ciphertext using AES-GCM.
         
         :param ciphertext: The base64 encoded ciphertext to decrypt.
+        :param tag: The base64 encoded tag.
+        :param nonce: The base64 encoded nonce.
         :return: The decrypted plaintext.
         """
+        if isinstance(ciphertext, str):
+            ciphertext = base64.b64decode(ciphertext)
+        if isinstance(tag, str):
+            tag = base64.b64decode(tag)
+        if isinstance(nonce, str):
+            nonce = base64.b64decode(nonce)
         cipher = AES.new(self.key, AES.MODE_GCM, nonce=nonce)
-        decrypted_text = cipher.decrypt_and_verify(ciphertext, tag)
-        return self.unpad(decrypted_text)  # Remove padding after decryption
+        plaintext = cipher.decrypt_and_verify(ciphertext, tag)
+        return plaintext.decode('utf-8')
+
+    def run(self, data, key_size):
+        """
+        Run the AES encryption and decryption process separately and combine the results.
+        
+        :param data: The data to encrypt and decrypt.
+        :param key_size: Size of the key in bytes.
+        """
+        # Encryption
+        start_time = time.time()
+        ciphertext, tag, nonce = self.encrypt(data)
+        encryption_time = time.time() - start_time
+
+        # Decryption
+        start_time = time.time()
+        self.decrypt(ciphertext, tag, nonce)
+        decryption_time = time.time() - start_time
+
+        self.execution_time = encryption_time + decryption_time
 
 class DESEncryption:
     """
@@ -70,11 +88,10 @@ class DESEncryption:
         
         :param key_size: Size of the key in bytes (default is 8 bytes for DES).
         """
-        if key_size != 8:
-            raise ValueError("Key size for DES must be 8bytes.")
-        
-        self.key = get_random_bytes(key_size)
+        self.key = b'EightKey'
         self.cipher = DES.new(self.key, DES.MODE_ECB)
+        self.name = "DESEncryption"
+        self.execution_time = 0
 
     def encrypt(self, plaintext):
         """
@@ -83,20 +100,10 @@ class DESEncryption:
         :param plaintext: The plaintext to encrypt.
         :return: The base64 encoded ciphertext.
         """
-        
-        try:
-            # Ensure the plaintext is in bytes
-            if isinstance(plaintext, str):
-                plaintext = plaintext.encode()
-
-            # Perform encryption with padding
-            padded_data = pad(plaintext, DES.block_size)
-            ciphertext = self.cipher.encrypt(padded_data)
-
-            # Encode the ciphertext in base64 and return
-            return base64.b64encode(ciphertext).decode('utf-8')
-        except Exception as e:
-            raise ValueError(f"Encryption failed: {str(e)}")
+        if isinstance(plaintext, str):
+            plaintext = plaintext.encode('utf-8')
+        ciphertext = self.cipher.encrypt(pad(plaintext, DES.block_size))
+        return base64.b64encode(ciphertext).decode('utf-8')
 
     def decrypt(self, ciphertext):
         """
@@ -105,34 +112,45 @@ class DESEncryption:
         :param ciphertext: The base64 encoded ciphertext to decrypt.
         :return: The decrypted plaintext.
         """
-        try:
-            # Ensure the ciphertext is in bytes
-            if isinstance(ciphertext, str):
-                ciphertext = base64.b64decode(ciphertext)
-            else:
-                ciphertext = base64.b64decode(ciphertext.decode())
+        if isinstance(ciphertext, str):
+            ciphertext = ciphertext.encode()
+        data = base64.b64decode(ciphertext)
+        plaintext = unpad(self.cipher.decrypt(data), DES.block_size)
+        return plaintext.decode('utf-8')
 
-            plaintext = unpad(self.cipher.decrypt(ciphertext), DES.block_size)
-            return plaintext.decode('utf-8')
-        except Exception as e:
-            raise ValueError(f"Decryption failed: {str(e)}")
+    def run(self, data, key_size):
+        """
+        Run the DES encryption and decryption process separately and combine the results.
+        
+        :param data: The data to encrypt and decrypt.
+        :param key_size: Size of the key in bytes.
+        """
+        # Encryption
+        start_time = time.time()
+        ciphertext = self.encrypt(data)
+        encryption_time = time.time() - start_time
+
+        # Decryption
+        start_time = time.time()
+        self.decrypt(ciphertext)
+        decryption_time = time.time() - start_time
+
+        self.execution_time = encryption_time + decryption_time
 
 class DES3Encryption:
     """
     Class to perform 3DES encryption and decryption.
     """
-    def __init__(self, key_size=24):
+    def __init__(self, key_size=16):
         """
         Initialize the 3DES cipher with a random key.
         
-        :param key_size: Size of the key in bytes (default is 24 bytes for 3DES).
+        :param key_size: Size of the key in bytes (default is 16 bytes for 3DES).
         """
-        if key_size not in [16, 24]:
-            raise ValueError("Key size for DES3 must be 16 or 24 bytes.")
-
-        self.key = get_random_bytes(key_size)
-        DES3.adjust_key_parity(self.key)
+        self.key = b'Sixteen byte key'
         self.cipher = DES3.new(self.key, DES3.MODE_ECB)
+        self.name = "DES3Encryption"
+        self.execution_time = 0
 
     def encrypt(self, plaintext):
         """
@@ -142,8 +160,7 @@ class DES3Encryption:
         :return: The base64 encoded ciphertext.
         """
         if isinstance(plaintext, str):
-            plaintext = plaintext.encode()
-
+            plaintext = plaintext.encode('utf-8')
         ciphertext = self.cipher.encrypt(pad(plaintext, DES3.block_size))
         return base64.b64encode(ciphertext).decode('utf-8')
 
@@ -156,10 +173,28 @@ class DES3Encryption:
         """
         if isinstance(ciphertext, str):
             ciphertext = ciphertext.encode()
-
         data = base64.b64decode(ciphertext)
         plaintext = unpad(self.cipher.decrypt(data), DES3.block_size)
         return plaintext.decode('utf-8')
+
+    def run(self, data, key_size):
+        """
+        Run the 3DES encryption and decryption process separately and combine the results.
+        
+        :param data: The data to encrypt and decrypt.
+        :param key_size: Size of the key in bytes.
+        """
+        # Encryption
+        start_time = time.time()
+        ciphertext = self.encrypt(data)
+        encryption_time = time.time() - start_time
+
+        # Decryption
+        start_time = time.time()
+        self.decrypt(ciphertext)
+        decryption_time = time.time() - start_time
+
+        self.execution_time = encryption_time + decryption_time
 
 class RC2Encryption:
     """
@@ -171,8 +206,10 @@ class RC2Encryption:
         
         :param key_size: Size of the key in bytes (default is 16 bytes for RC2).
         """
-        self.key = get_random_bytes(key_size)
+        self.key = b'Sixteen byte key'
         self.cipher = ARC2.new(self.key, ARC2.MODE_ECB)
+        self.name = "RC2Encryption"
+        self.execution_time = 0
 
     def encrypt(self, plaintext):
         """
@@ -182,8 +219,7 @@ class RC2Encryption:
         :return: The base64 encoded ciphertext.
         """
         if isinstance(plaintext, str):
-            plaintext = plaintext.encode()
-
+            plaintext = plaintext.encode('utf-8')
         ciphertext = self.cipher.encrypt(pad(plaintext, ARC2.block_size))
         return base64.b64encode(ciphertext).decode('utf-8')
 
@@ -196,10 +232,28 @@ class RC2Encryption:
         """
         if isinstance(ciphertext, str):
             ciphertext = ciphertext.encode()
-
         data = base64.b64decode(ciphertext)
         plaintext = unpad(self.cipher.decrypt(data), ARC2.block_size)
         return plaintext.decode('utf-8')
+
+    def run(self, data, key_size):
+        """
+        Run the RC2 encryption and decryption process separately and combine the results.
+        
+        :param data: The data to encrypt and decrypt.
+        :param key_size: Size of the key in bytes.
+        """
+        # Encryption
+        start_time = time.time()
+        ciphertext = self.encrypt(data)
+        encryption_time = time.time() - start_time
+
+        # Decryption
+        start_time = time.time()
+        self.decrypt(ciphertext)
+        decryption_time = time.time() - start_time
+
+        self.execution_time = encryption_time + decryption_time
 
 class RC4Encryption:
     """
@@ -211,8 +265,10 @@ class RC4Encryption:
         
         :param key_size: Size of the key in bytes (default is 16 bytes for RC4).
         """
-        self.key = get_random_bytes(key_size)
-        self.cipher = ARC4.new(self.key)
+        self.key = b'Sixteen byte key'
+        #self.cipher = ARC4.new(self.key)
+        self.name = "RC4Encryption"
+        self.execution_time = 0
 
     def encrypt(self, plaintext):
         """
@@ -222,8 +278,9 @@ class RC4Encryption:
         :return: The base64 encoded ciphertext.
         """
         if isinstance(plaintext, str):
-            plaintext = plaintext.encode() 
-        ciphertext = self.cipher.encrypt(plaintext)
+            plaintext = plaintext.encode('utf-8')
+        cipher = ARC4.new(self.key)   
+        ciphertext = cipher.encrypt(plaintext)
         return base64.b64encode(ciphertext).decode('utf-8')
 
     def decrypt(self, ciphertext):
@@ -233,9 +290,30 @@ class RC4Encryption:
         :param ciphertext: The base64 encoded ciphertext to decrypt.
         :return: The decrypted plaintext.
         """
-        data = base64.b64decode(ciphertext)
-        plaintext = self.cipher.decrypt(data)
+        if isinstance(ciphertext, str):
+            ciphertext = base64.b64decode(ciphertext)
+        cipher = ARC4.new(self.key)
+        plaintext = cipher.decrypt(ciphertext)
         return plaintext.decode('utf-8')
+
+    def run(self, data, key_size):
+        """
+        Run the RC4 encryption and decryption process separately and combine the results.
+        
+        :param data: The data to encrypt and decrypt.
+        :param key_size: Size of the key in bytes.
+        """
+        # Encryption
+        start_time = time.time()
+        ciphertext = self.encrypt(data)
+        encryption_time = time.time() - start_time
+
+        # Decryption
+        start_time = time.time()
+        self.decrypt(ciphertext)
+        decryption_time = time.time() - start_time
+
+        self.execution_time = encryption_time + decryption_time
 
 class BlowfishEncryption:
     """
@@ -247,8 +325,10 @@ class BlowfishEncryption:
         
         :param key_size: Size of the key in bytes (default is 16 bytes for Blowfish).
         """
-        self.key = get_random_bytes(key_size)
+        self.key = b'Sixteen byte key'
         self.cipher = Blowfish.new(self.key, Blowfish.MODE_ECB)
+        self.name = "BlowfishEncryption"
+        self.execution_time = 0
 
     def encrypt(self, plaintext):
         """
@@ -257,8 +337,8 @@ class BlowfishEncryption:
         :param plaintext: The plaintext to encrypt.
         :return: The base64 encoded ciphertext.
         """
-        if isinstance(plaintext, str):  # Check if it's a string
-            plaintext = plaintext.encode()
+        if isinstance(plaintext, str):
+            plaintext = plaintext.encode('utf-8')
         ciphertext = self.cipher.encrypt(pad(plaintext, Blowfish.block_size))
         return base64.b64encode(ciphertext).decode('utf-8')
 
@@ -269,6 +349,26 @@ class BlowfishEncryption:
         :param ciphertext: The base64 encoded ciphertext to decrypt.
         :return: The decrypted plaintext.
         """
-        data = base64.b64decode(ciphertext)
-        plaintext = unpad(self.cipher.decrypt(data), Blowfish.block_size)
+        if isinstance(ciphertext, str):
+            ciphertext = base64.b64decode(ciphertext)
+        plaintext = unpad(self.cipher.decrypt(ciphertext), Blowfish.block_size)
         return plaintext.decode('utf-8')
+
+    def run(self, data, key_size):
+        """
+        Run the Blowfish encryption and decryption process separately and combine the results.
+        
+        :param data: The data to encrypt and decrypt.
+        :param key_size: Size of the key in bytes.
+        """
+        # Encryption
+        start_time = time.time()
+        ciphertext = self.encrypt(data)
+        encryption_time = time.time() - start_time
+
+        # Decryption
+        start_time = time.time()
+        self.decrypt(ciphertext)
+        decryption_time = time.time() - start_time
+
+        self.execution_time = encryption_time + decryption_time
