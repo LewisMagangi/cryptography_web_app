@@ -10,12 +10,10 @@ from Crypto.PublicKey import RSA, DSA, ECC
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import DSS
 from Crypto.Hash import SHA256
-from Crypto.Random import get_random_bytes
 from cryptography.hazmat.primitives.asymmetric import dh
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives.hashes import SHA256 as CryptoSHA256
-from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+import time
 
 class RSAEncryption:
     """
@@ -23,13 +21,14 @@ class RSAEncryption:
     """
     def __init__(self, key_size=2048):
         """
-        Initialize the RSA cipher with a random key pair.
+        Initialize the RSA with a random key pair.
         
         :param key_size: Size of the key in bits (default is 2048 bits).
         """
         self.key = RSA.generate(key_size)
-        self.public_key = self.key.publickey()
-        self.cipher = PKCS1_OAEP.new(self.public_key)
+        self.cipher = PKCS1_OAEP.new(self.key)
+        self.name = "RSAEncryption"
+        self.execution_time = 0
 
     def encrypt(self, plaintext):
         """
@@ -40,13 +39,8 @@ class RSAEncryption:
         """
         if isinstance(plaintext, str):
             plaintext = plaintext.encode('utf-8')  # Convert to bytes
-        try:
-            ciphertext = self.cipher.encrypt(plaintext)  # Assign ciphertext
-        except Exception as e:
-            print("Error during encryption:", e)
-            raise
+        ciphertext = self.cipher.encrypt(plaintext)
         return ciphertext
-        
 
     def decrypt(self, ciphertext):
         """
@@ -55,9 +49,27 @@ class RSAEncryption:
         :param ciphertext: The ciphertext to decrypt.
         :return: The decrypted plaintext.
         """
-        cipher = PKCS1_OAEP.new(self.key)
-        plaintext = cipher.decrypt(ciphertext)
+        plaintext = self.cipher.decrypt(ciphertext)
         return plaintext.decode('utf-8')
+
+    def run(self, data, key_size):
+        """
+        Run the RSA encryption and decryption process separately and combine the results.
+        
+        :param data: The data to encrypt and decrypt.
+        :param key_size: Size of the key in bits.
+        """
+        # Encryption
+        start_time = time.time()
+        ciphertext = self.encrypt(data)
+        encryption_time = time.time() - start_time
+
+        # Decryption
+        start_time = time.time()
+        self.decrypt(ciphertext)
+        decryption_time = time.time() - start_time
+
+        self.execution_time = encryption_time + decryption_time
 
 class DSAEncryption:
     """
@@ -71,6 +83,8 @@ class DSAEncryption:
         """
         self.key = DSA.generate(key_size)
         self.public_key = self.key.publickey()
+        self.name = "DSAEncryption"
+        self.execution_time = 0
 
     def sign(self, message):
         """
@@ -100,36 +114,24 @@ class DSAEncryption:
         except ValueError:
             return False
 
-class DHEncryption:
-    """
-    Class to perform Diffie-Hellman key exchange.
-    """
-    def __init__(self, key_size=2048):
+    def run(self, data, key_size):
         """
-        Initialize the Diffie-Hellman with a random key pair.
+        Run the DSA signing and verification process separately and combine the results.
         
-        :param key_size: Size of the key in bits (default is 2048 bits).
+        :param data: The data to sign and verify.
+        :param key_size: Size of the key in bits.
         """
-        self.parameters = dh.generate_parameters(generator=2, key_size=key_size, backend=default_backend())
-        self.private_key = self.parameters.generate_private_key()
-        self.public_key = self.private_key.public_key()
+        # Signing
+        start_time = time.time()
+        signature = self.sign(data)
+        signing_time = time.time() - start_time
 
-    def generate_shared_key(self, other_public_key):
-        """
-        Generate a shared key using Diffie-Hellman key exchange.
-        
-        :param other_public_key: The other party's public key.
-        :return: The shared key.
-        """
-        shared_key = self.private_key.exchange(other_public_key)
-        derived_key = HKDF(
-            algorithm=CryptoSHA256(),
-            length=32,
-            salt=None,
-            info=b'handshake data',
-            backend=default_backend()
-        ).derive(shared_key)
-        return derived_key
+        # Verification
+        start_time = time.time()
+        self.verify(data, signature)
+        verification_time = time.time() - start_time
+
+        self.execution_time = signing_time + verification_time
 
 class ECCEncryption:
     """
@@ -137,12 +139,14 @@ class ECCEncryption:
     """
     def __init__(self, curve='P-256'):
         """
-        Initialize the ECC cipher with a random key pair.
+        Initialize the ECC with a random key pair.
         
         :param curve: The elliptic curve to use (default is 'P-256').
         """
         self.key = ECC.generate(curve=curve)
         self.public_key = self.key.public_key()
+        self.name = "ECCEncryption"
+        self.execution_time = 0
 
     def sign(self, message):
         """
@@ -171,3 +175,64 @@ class ECCEncryption:
             return True
         except ValueError:
             return False
+
+    def run(self, data, key_size):
+        """
+        Run the ECC signing and verification process separately and combine the results.
+        
+        :param data: The data to sign and verify.
+        :param key_size: Size of the key in bits.
+        """
+        # Signing
+        start_time = time.time()
+        signature = self.sign(data)
+        signing_time = time.time() - start_time
+
+        # Verification
+        start_time = time.time()
+        self.verify(data, signature)
+        verification_time = time.time() - start_time
+
+        self.execution_time = signing_time + verification_time
+
+class DHEncryption:
+    """
+    Class to perform Diffie-Hellman key exchange.
+    """
+    def __init__(self, key_size=2048):
+        """
+        Initialize the Diffie-Hellman parameters and generate a key pair.
+        
+        :param key_size: Size of the key in bits (default is 2048 bits).
+        """
+        self.parameters = dh.generate_parameters(generator=2, key_size=key_size)
+        self.private_key = self.parameters.generate_private_key()
+        self.public_key = self.private_key.public_key()
+        self.name = "DHEncryption"
+        self.execution_time = 0
+
+    def generate_shared_key(self, peer_public_key):
+        """
+        Generate a shared key using the peer's public key.
+        
+        :param peer_public_key: The peer's public key.
+        :return: The shared key.
+        """
+        shared_key = self.private_key.exchange(peer_public_key)
+        return shared_key
+
+    def run(self, data, key_size):
+        """
+        Run the Diffie-Hellman key exchange process.
+        
+        :param data: Not used in this context.
+        :param key_size: Size of the key in bits.
+        """
+        # Generate the other party's Diffie-Hellman key pair
+        other_party_private_key = self.parameters.generate_private_key()
+        other_party_public_key = other_party_private_key.public_key()
+
+        # Generate shared keys
+        start_time = time.time()
+        self.generate_shared_key(other_party_public_key)
+        self.execution_time = time.time() - start_time
