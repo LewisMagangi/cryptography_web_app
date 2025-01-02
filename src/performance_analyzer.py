@@ -4,6 +4,10 @@ import sys
 import psutil
 import time
 import pandas as pd
+from memory_profiler import memory_usage
+from src.symmetric import AESEncryption, DESEncryption, DES3Encryption, RC2Encryption, RC4Encryption, BlowfishEncryption
+from src.asymmetric import RSAEncryption, DSAEncryption, DHEncryption, ECCEncryption
+from src.hashing import SHA1Hash, SHA2Hash, MD5Hash, HMACHash
 
 # Add the src directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -106,6 +110,7 @@ class PerformanceAnalyzer:
             "MD5Hash": MD5Hash,
             "HMACHash": HMACHash,
         }
+        self.data = []
 
     def get_data_files(self, algo_name):
         """
@@ -180,7 +185,7 @@ class PerformanceAnalyzer:
         key_sizes = {
             "AESEncryption": [128, 192, 256],  # AES supports 128, 192, and 256-bit keys
             "DESEncryption": [64],  # DES uses a 64-bit key (56 bits effective)
-            "DES3Encryption": [192],  # 3DES uses 192 bits
+            "DES3Encryption": [128, 192],  # 3DES uses 192 bits
             "RC2Encryption": [40, 64, 128],  # RC2 supports variable key sizes
             "RC4Encryption": [40, 128],  # RC4 supports variable key sizes
             "BlowfishEncryption": [128, 448],  # Blowfish supports variable key sizes up to 448 bits
@@ -273,6 +278,61 @@ class PerformanceAnalyzer:
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(existing_data.values())
+
+    def collect_performance_data(self, algorithm, data_size, iterations, key_size):
+        cpu_usage = []
+        ram_usage = []
+
+        data = self.load_data(data_size)  # Load the data of the specified size
+
+        for _ in range(iterations):
+            start_cpu = psutil.cpu_percent(interval=0.1)
+
+            mem_usage = memory_usage((algorithm.run, (data, key_size)), interval=0.1)
+            avg_mem_usage = sum(mem_usage) / len(mem_usage)
+
+            end_cpu = psutil.cpu_percent(interval=0.1)
+            cpu_usage.append(end_cpu - start_cpu)
+            ram_usage.append(avg_mem_usage)
+
+        avg_cpu = sum(cpu_usage) / len(cpu_usage)
+        avg_ram = sum(ram_usage) / len(ram_usage)
+
+        self.data.append({
+            "algorithm": algorithm.name,
+            "data_size": data_size,
+            "iterations": iterations,
+            "key_size": key_size,
+            "avg_cpu": avg_cpu,
+            "avg_time": algorithm.execution_time,
+            "avg_ram": avg_ram
+        })
+
+    def analyze_performance(self):
+        algorithms = [AESEncryption(), DESEncryption(), RSAEncryption(), SHA1Hash(), RSASign(), DSAEncryption()]
+        data_sizes = ["1MB", "10MB", "50MB"]
+        iterations = 2
+
+        for algorithm in algorithms:
+            for data_size in data_sizes:
+                self.collect_performance_data(algorithm, data_size, iterations, None)
+
+        self.save_results()
+
+    def load_data(self, data_size):
+        """
+        Load data of the specified size from a file or generate it if not available.
+        
+        :param data_size: Size of the data to load.
+        :return: The data of the specified size.
+        """
+        data_path = os.path.join(os.path.dirname(__file__), '..', 'data', f'{data_size}.txt')
+        if os.path.exists(data_path):
+            with open(data_path, 'r') as file:
+                data = file.read()
+        else:
+            data = "A" * int(data_size.replace("MB", "")) * 1024 * 1024  # Generate data if file not found
+        return data
 
 # Main execution
 if __name__ == "__main__":
