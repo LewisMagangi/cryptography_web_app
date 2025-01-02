@@ -176,25 +176,43 @@ class PerformanceAnalyzer:
             iterations (int): Number of iterations to measure performance.
             key_size (int): Key size for encryption algorithms.
         """
+        # Define key sizes for relevant algorithms
+        key_sizes = {
+            "AESEncryption": [128, 192, 256],  # AES supports 128, 192, and 256-bit keys
+            "DESEncryption": [64],  # DES uses a 64-bit key (56 bits effective)
+            "DES3Encryption": [192],  # 3DES uses 192 bits
+            "RC2Encryption": [40, 64, 128],  # RC2 supports variable key sizes
+            "RC4Encryption": [40, 128],  # RC4 supports variable key sizes
+            "BlowfishEncryption": [128, 448],  # Blowfish supports variable key sizes up to 448 bits
+            "RSAEncryption": [2048, 3072, 4096],  # RSA supports various sizes
+        }
+
         results = []
 
         for algo_name, algo_class in self.algorithms.items():
-            data_files = self.get_data_files(algo_name)
-            for data_path in data_files:
-                with open(data_path, "rb") as file:
-                    data = file.read()
+            # Skip hashing algorithms as they don't use key sizes
+            if algo_name not in key_sizes:
+                key_sizes_for_algo = [None]  # No key size
+            else:
+                key_sizes_for_algo = key_sizes[algo_name]
+            
+            for key_size in key_sizes_for_algo:
+                data_files = self.get_data_files(algo_name)
+                for data_path in data_files:
+                    with open(data_path, "rb") as file:
+                        data = file.read()
 
-                averages = self.analyze_algorithm(algo_name, algo_class, data, key_size)
-                # Make sure to include the required performance data along with the averages
-                results.append({
-                    "algorithm": algo_name,
-                    "data_size": os.path.basename(data_path),
-                    "iterations": iterations,
-                    "key_size": key_size,
-                    **averages,
-                })
+                    averages = self.analyze_algorithm(algo_name, algo_class, data, key_size)
+                    # Make sure to include the required performance data along with the averages
+                    results.append({
+                        "algorithm": algo_name,
+                        "data_size": os.path.basename(data_path),
+                        "iterations": iterations,
+                        "key_size": key_size,
+                        **averages,
+                    })
 
-            self.save_results(results)
+                self.save_results(results)
 
     def save_results(self, results):
         """
