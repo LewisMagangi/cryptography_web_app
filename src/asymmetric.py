@@ -1,34 +1,40 @@
 """
-Implementation of asymmetric encryption and decryption of the following algorithms:
+Implementation of asymmetric algorithms:
 Asymmetric Algorithms
 RSA (Rivest-Shamir-Adleman)
 DSA (Digital Signature Algorithm)
 DH (Diffie-Hellman)
 ECC (Elliptic Curve Cryptography)
 """
+import os
+import time
+import csv
 from Crypto.PublicKey import RSA, DSA, ECC
 from Crypto.Cipher import PKCS1_OAEP
-from Crypto.Signature import DSS
+from Crypto.Signature import pkcs1_15, DSS
 from Crypto.Hash import SHA256
 from cryptography.hazmat.primitives.asymmetric import dh
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives import hashes
-import time
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
+# Define constants
+DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'smaller_sample_text')
+ANALYSIS_RESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'results', 'asymmetric_analysis_results.csv')
 
 class RSAEncryption:
     """
-    Class to perform RSA encryption and decryption.
+    Class to perform RSA encryption, decryption, signing, and verification.
     """
     def __init__(self, key_size=2048):
         """
-        Initialize the RSA with a random key pair.
+        Initialize the RSA encryption with the specified key size.
         
-        :param key_size: Size of the key in bits (default is 2048 bits).
+        :param key_size: Size of the RSA key in bits (default is 2048).
         """
+        self.key_size = key_size
         self.key = RSA.generate(key_size)
         self.cipher = PKCS1_OAEP.new(self.key)
-        self.name = "RSAEncryption"
-        self.execution_time = 0
 
     def encrypt(self, plaintext):
         """
@@ -52,24 +58,35 @@ class RSAEncryption:
         plaintext = self.cipher.decrypt(ciphertext)
         return plaintext.decode('utf-8')
 
-    def run(self, data, key_size):
+    def sign(self, message):
         """
-        Run the RSA encryption and decryption process separately and combine the results.
+        Sign the message using RSA.
         
-        :param data: The data to encrypt and decrypt.
-        :param key_size: Size of the key in bits.
+        :param message: The message to sign.
+        :return: The signature.
         """
-        # Encryption
-        start_time = time.time()
-        ciphertext = self.encrypt(data)
-        encryption_time = time.time() - start_time
+        if isinstance(message, str):
+            message = message.encode('utf-8')
+        h = SHA256.new(message)
+        signature = pkcs1_15.new(self.key).sign(h)
+        return signature
 
-        # Decryption
-        start_time = time.time()
-        self.decrypt(ciphertext)
-        decryption_time = time.time() - start_time
-
-        self.execution_time = encryption_time + decryption_time
+    def verify(self, message, signature):
+        """
+        Verify the signature using RSA.
+        
+        :param message: The message to verify.
+        :param signature: The signature to verify.
+        :return: True if the signature is valid, False otherwise.
+        """
+        if isinstance(message, str):
+            message = message.encode('utf-8')
+        h = SHA256.new(message)
+        try:
+            pkcs1_15.new(self.key).verify(h, signature)
+            return True
+        except (ValueError, TypeError):
+            return False
 
 class DSAEncryption:
     """
@@ -77,14 +94,12 @@ class DSAEncryption:
     """
     def __init__(self, key_size=2048):
         """
-        Initialize the DSA with a random key pair.
+        Initialize the DSA signing with the specified key size.
         
-        :param key_size: Size of the key in bits (default is 2048 bits).
+        :param key_size: Size of the DSA key in bits (default is 2048).
         """
+        self.key_size = key_size
         self.key = DSA.generate(key_size)
-        self.public_key = self.key.publickey()
-        self.name = "DSAEncryption"
-        self.execution_time = 0
 
     def sign(self, message):
         """
@@ -93,10 +108,11 @@ class DSAEncryption:
         :param message: The message to sign.
         :return: The signature.
         """
-        h = SHA256.new(message.encode())
+        if isinstance(message, str):
+            message = message.encode('utf-8')
+        h = SHA256.new(message)
         signer = DSS.new(self.key, 'fips-186-3')
-        signature = signer.sign(h)
-        return signature
+        return signer.sign(h)
 
     def verify(self, message, signature):
         """
@@ -106,96 +122,17 @@ class DSAEncryption:
         :param signature: The signature to verify.
         :return: True if the signature is valid, False otherwise.
         """
-        h = SHA256.new(message.encode())
-        verifier = DSS.new(self.public_key, 'fips-186-3')
+        if isinstance(message, str):
+            message = message.encode('utf-8')
+        h = SHA256.new(message)
+        verifier = DSS.new(self.key, 'fips-186-3')
         try:
             verifier.verify(h, signature)
             return True
         except ValueError:
             return False
 
-    def run(self, data, key_size):
-        """
-        Run the DSA signing and verification process separately and combine the results.
-        
-        :param data: The data to sign and verify.
-        :param key_size: Size of the key in bits.
-        """
-        # Signing
-        start_time = time.time()
-        signature = self.sign(data)
-        signing_time = time.time() - start_time
-
-        # Verification
-        start_time = time.time()
-        self.verify(data, signature)
-        verification_time = time.time() - start_time
-
-        self.execution_time = signing_time + verification_time
-
-class ECCEncryption:
-    """
-    Class to perform ECC signing and verification.
-    """
-    def __init__(self, curve='P-256'):
-        """
-        Initialize the ECC with a random key pair.
-        
-        :param curve: The elliptic curve to use (default is 'P-256').
-        """
-        self.key = ECC.generate(curve=curve)
-        self.public_key = self.key.public_key()
-        self.name = "ECCEncryption"
-        self.execution_time = 0
-
-    def sign(self, message):
-        """
-        Sign the message using ECC.
-        
-        :param message: The message to sign.
-        :return: The signature.
-        """
-        h = SHA256.new(message.encode())
-        signer = DSS.new(self.key, 'fips-186-3')
-        signature = signer.sign(h)
-        return signature
-
-    def verify(self, message, signature):
-        """
-        Verify the signature using ECC.
-        
-        :param message: The message to verify.
-        :param signature: The signature to verify.
-        :return: True if the signature is valid, False otherwise.
-        """
-        h = SHA256.new(message.encode())
-        verifier = DSS.new(self.public_key, 'fips-186-3')
-        try:
-            verifier.verify(h, signature)
-            return True
-        except ValueError:
-            return False
-
-    def run(self, data, key_size):
-        """
-        Run the ECC signing and verification process separately and combine the results.
-        
-        :param data: The data to sign and verify.
-        :param key_size: Size of the key in bits.
-        """
-        # Signing
-        start_time = time.time()
-        signature = self.sign(data)
-        signing_time = time.time() - start_time
-
-        # Verification
-        start_time = time.time()
-        self.verify(data, signature)
-        verification_time = time.time() - start_time
-
-        self.execution_time = signing_time + verification_time
-
-class DHEncryption:
+class DiffieHellmanEncryption:
     """
     Class to perform Diffie-Hellman key exchange.
     """
@@ -205,10 +142,10 @@ class DHEncryption:
         
         :param key_size: Size of the key in bits (default is 2048 bits).
         """
-        self.parameters = dh.generate_parameters(generator=2, key_size=key_size)
+        self.parameters = dh.generate_parameters(generator=2, key_size=key_size, backend=default_backend())
         self.private_key = self.parameters.generate_private_key()
         self.public_key = self.private_key.public_key()
-        self.name = "DHEncryption"
+        self.name = "DiffieHellmanEncryption"
         self.execution_time = 0
 
     def generate_shared_key(self, peer_public_key):
@@ -216,16 +153,22 @@ class DHEncryption:
         Generate a shared key using the peer's public key.
         
         :param peer_public_key: The peer's public key.
-        :return: The shared key.
+        :return: The derived shared key.
         """
         shared_key = self.private_key.exchange(peer_public_key)
-        return shared_key
+        derived_key = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b'dh_key_exchange',
+            backend=default_backend()
+        ).derive(shared_key)
+        return derived_key
 
-    def run(self, data, key_size):
+    def run(self, key_size):
         """
         Run the Diffie-Hellman key exchange process.
         
-        :param data: Not used in this context.
         :param key_size: Size of the key in bits.
         """
         # Generate the other party's Diffie-Hellman key pair
@@ -236,3 +179,145 @@ class DHEncryption:
         start_time = time.time()
         self.generate_shared_key(other_party_public_key)
         self.execution_time = time.time() - start_time
+
+class ECCEncryption:
+    """
+    Class to perform ECC signing and verification.
+    """
+    def __init__(self, curve='P-256'):
+        """
+        Initialize the ECC signing with the specified curve.
+        
+        :param curve: The ECC curve to use (default is 'P-256').
+        """
+        self.curve = curve
+        self.key = ECC.generate(curve=curve)
+
+    def sign(self, message):
+        """
+        Sign the message using ECC.
+        
+        :param message: The message to sign.
+        :return: The signature.
+        """
+        if isinstance(message, str):
+            message = message.encode('utf-8')
+        h = SHA256.new(message)
+        signer = DSS.new(self.key, 'fips-186-3')
+        return signer.sign(h)
+
+    def verify(self, message, signature):
+        """
+        Verify the signature using ECC.
+        
+        :param message: The message to verify.
+        :param signature: The signature to verify.
+        :return: True if the signature is valid, False otherwise.
+        """
+        if isinstance(message, str):
+            message = message.encode('utf-8')
+        h = SHA256.new(message)
+        verifier = DSS.new(self.key.public_key(), 'fips-186-3')
+        try:
+            verifier.verify(h, signature)
+            return True
+        except ValueError:
+            return False
+
+def measure_time(func):
+    """
+    Decorator to measure the time taken by a function.
+    
+    :param func: The function to measure.
+    :return: The time taken and the function's result.
+    """
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        return end_time - start_time, result
+    return wrapper
+
+def save_results(algorithm, operation, key_size, file_name, time_taken):
+    """
+    Save the time taken for an operation to a CSV file.
+    
+    :param algorithm: The name of the algorithm.
+    :param operation: The operation performed (e.g., encryption, signing).
+    :param key_size: The size of the key or curve.
+    :param file_name: The name of the file used.
+    :param time_taken: The time taken for the operation.
+    """
+    with open(ANALYSIS_RESULTS_PATH, 'a', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([algorithm, operation, key_size, file_name, time_taken])
+
+if __name__ == "__main__":
+    # Initialize results file
+    with open(ANALYSIS_RESULTS_PATH, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['algorithm', 'operation', 'key_size', 'file_name', 'time_taken'])
+
+    # Test data files
+    sample_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.txt')]
+    key_sizes = {
+        'RSA': [2048, 3072, 4096],
+        'DSA': [1024, 2048, 3072],
+        'DH': [2048, 3072, 4096],
+        'ECC': ['P-256', 'P-384', 'P-521']
+    }
+
+    for file_name in sample_files:
+        with open(os.path.join(DATA_DIR, file_name), 'r') as file:
+            data = file.read()
+
+        # RSA Tests
+        for key_size in key_sizes['RSA']:
+            rsa = RSAEncryption(key_size)
+            
+            # Encryption/Decryption
+            enc_time, encrypted = measure_time(rsa.encrypt)(data)
+            save_results('RSA', 'encryption', key_size, file_name, enc_time)
+            
+            dec_time, decrypted = measure_time(rsa.decrypt)(encrypted)
+            save_results('RSA', 'decryption', key_size, file_name, dec_time)
+            
+            # Signing/Verification
+            sign_time, signature = measure_time(rsa.sign)(data)
+            save_results('RSA', 'signing', key_size, file_name, sign_time)
+            
+            verify_time, _ = measure_time(rsa.verify)(data, signature)
+            save_results('RSA', 'verification', key_size, file_name, verify_time)
+
+        # DSA Tests
+        for key_size in key_sizes['DSA']:
+            dsa = DSAEncryption(key_size)
+            
+            # Signing/Verification
+            sign_time, signature = measure_time(dsa.sign)(data)
+            save_results('DSA', 'signing', key_size, file_name, sign_time)
+            
+            verify_time, _ = measure_time(dsa.verify)(data, signature)
+            save_results('DSA', 'verification', key_size, file_name, verify_time)
+
+        # DH Tests
+        for key_size in key_sizes['DH']:
+            dhe = DiffieHellmanEncryption(key_size)
+            
+            # Key Exchange
+            dhe.run(key_size)
+            exchange_time = dhe.execution_time
+            save_results('DH', 'key_exchange', key_size, file_name, exchange_time)
+
+        # ECC Tests
+        for curve in key_sizes['ECC']:
+            ecc = ECCEncryption(curve)
+            
+            # Signing/Verification
+            sign_time, signature = measure_time(ecc.sign)(data)
+            save_results('ECC', 'signing', curve, file_name, sign_time)
+            
+            verify_time, _ = measure_time(ecc.verify)(data, signature)
+            save_results('ECC', 'verification', curve, file_name, verify_time)
+
+        print(f"Completed analysis for {file_name}")
