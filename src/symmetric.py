@@ -12,6 +12,12 @@ from Crypto.Cipher import AES, DES, DES3, ARC2, ARC4, Blowfish
 from Crypto.Util.Padding import pad, unpad
 import base64
 import time
+import os
+import csv
+
+# Define constants
+DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'sample_text')
+ANALYSIS_RESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'results', 'symmetric_analysis_results.csv')
 
 class AESEncryption:
     """
