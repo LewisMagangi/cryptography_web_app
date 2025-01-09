@@ -25,7 +25,7 @@
           <div class="container">
             <a class="navbar-brand mr-4" href="{% url 'blog-home'%}">Django Blog</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+              <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarToggle">
               <div class="navbar-nav mr-auto">
@@ -35,9 +35,12 @@
               <!-- Navbar Right Side -->
               <div class="navbar-nav">
                 {% if user.is_authenticated %}
-                  <a class="nav-item nav-link" href="{% url 'post-create' %}">New Post</a>
                   <a class="nav-item nav-link" href="{% url 'profile' %}">Profile</a>
-                  <a class="nav-item nav-link" href="{% url 'logout' %}">Logout</a>
+                  <a class="nav-item nav-link" href="{% url 'post-create' %}">New Post</a>
+                  <form method="POST" action="{% url 'logout' %}" class="nav-item nav-link">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link nav-item nav-link" style="padding: 0; border: none; background: none;">Logout</button>
+                  </form>
                 {% else %}
                   <a class="nav-item nav-link" href="{% url 'login' %}">Login</a>
                   <a class="nav-item nav-link" href="{% url 'register' %}">Register</a>
