@@ -12,7 +12,7 @@ def generate_text_data(size_in_mb):
     return text
 
 # Sizes to generate text data for
-sizes = [1, 2, 5, 10, 20, 50, 100]
+sizes = [10, 20, 30, 40, 50, 60]
 
 # Generate text data for each size and save it into a separate file
 for size in sizes:
