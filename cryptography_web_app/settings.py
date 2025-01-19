@@ -31,7 +31,7 @@ SECRET_KEY = config['SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['54.234.99.63']
+ALLOWED_HOSTS = ['www.liquelaliqour.tech', 'cryptography.liquelaliqour.tech', '54.234.99.63']
 
 
 # Application definition
