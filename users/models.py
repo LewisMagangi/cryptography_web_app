@@ -20,3 +20,14 @@ class Profile(models.Model):
             output_size = (300, 300)
             img.thumbnail(output_size)
             img.save(self.image.path)
+
+class SymmetricAnalysisResult(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    algorithm = models.CharField(max_length=50)
+    operation = models.CharField(max_length=50)
+    key_size = models.IntegerField()
+    file_name = models.CharField(max_length=100)
+    time_taken = models.FloatField()
+
+    def __str__(self):
+        return f"{self.algorithm} - {self.operation} - {self.key_size} - {self.file_name}"
