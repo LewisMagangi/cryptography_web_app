@@ -3,18 +3,21 @@ Implementation of hashing algorithms:
 Hashing Algorithms
 SHA-1 (Secure Hash Algorithm 1)
 SHA-2 (Secure Hash Algorithm 2) family: including SHA-224, SHA-256, SHA-384, SHA-512
+SHA-3 (Secure Hash Algorithm 3) family: including SHA3-224, SHA3-256, SHA3-384, SHA3-512
+SHAKE (Secure Hash Algorithm Keccak) family: including SHAKE128, SHAKE256
 MD5 (Message Digest Algorithm 5)
 HMAC (Hash-based Message Authentication Code)
 """
 import os
 import time
 import csv
+import hashlib
 from Crypto.Hash import SHA1, SHA224, SHA256, SHA384, SHA512, MD5, HMAC
 from Crypto.Random import get_random_bytes
 
 # Define constants
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'sample_text')
-ANALYSIS_RESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'results', 'analysis_performance_data.csv')
+ANALYSIS_RESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'results', 'hashing_analysis_results.csv')
 
 class SHA1Hash:
     """
@@ -107,6 +110,68 @@ class HMACHash:
         h.update(message)
         return h.hexdigest()
 
+class SHA3Hash:
+    """
+    Class to perform SHA-3 hashing.
+    """
+    def __init__(self, algorithm='SHA3-256'):
+        """
+        Initialize the SHA-3 hash with the specified algorithm.
+        
+        :param algorithm: The SHA-3 algorithm to use (default is 'SHA3-256').
+        """
+        self.algorithm = algorithm
+
+    def hash(self, message):
+        """
+        Hash the message using SHA-3.
+        
+        :param message: The message to hash.
+        :return: The hash digest.
+        """
+        if self.algorithm == 'SHA3-224':
+            h = hashlib.sha3_224()
+        elif self.algorithm == 'SHA3-256':
+            h = hashlib.sha3_256()
+        elif self.algorithm == 'SHA3-384':
+            h = hashlib.sha3_384()
+        elif self.algorithm == 'SHA3-512':
+            h = hashlib.sha3_512()
+        if isinstance(message, str):
+            message = message.encode('utf-8')  # Convert to bytes if str
+        h.update(message)
+        return h.hexdigest()
+
+class SHAKEHash:
+    """
+    Class to perform SHAKE hashing.
+    """
+    def __init__(self, algorithm='SHAKE128', output_length=32):
+        """
+        Initialize the SHAKE hash with the specified algorithm and output length.
+        
+        :param algorithm: The SHAKE algorithm to use (default is 'SHAKE128').
+        :param output_length: The length of the output hash.
+        """
+        self.algorithm = algorithm
+        self.output_length = output_length
+
+    def hash(self, message):
+        """
+        Hash the message using SHAKE.
+        
+        :param message: The message to hash.
+        :return: The hash digest.
+        """
+        if self.algorithm == 'SHAKE128':
+            h = hashlib.shake_128()
+        elif self.algorithm == 'SHAKE256':
+            h = hashlib.shake_256()
+        if isinstance(message, str):
+            message = message.encode('utf-8')  # Convert to bytes if str
+        h.update(message)
+        return h.hexdigest(self.output_length)
+
 def save_time_result(algorithm_name, file_name, total_time):
     with open(ANALYSIS_RESULTS_PATH, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
@@ -130,7 +195,7 @@ if __name__ == "__main__":
     # Ensure the results file is empty before starting
     with open(ANALYSIS_RESULTS_PATH, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['algo_name', 'file_name', 'time_taken'])
+        writer.writerow(['Algorithm', 'File Name', 'Time Taken'])
 
     # List of sample data files
     sample_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.txt')]
@@ -144,6 +209,12 @@ if __name__ == "__main__":
         sha2_512 = SHA2Hash('SHA-512')
         md5 = MD5Hash()
         hmac = HMACHash()
+        sha3_224 = SHA3Hash('SHA3-224')
+        sha3_256 = SHA3Hash('SHA3-256')
+        sha3_384 = SHA3Hash('SHA3-384')
+        sha3_512 = SHA3Hash('SHA3-512')
+        shake128 = SHAKEHash('SHAKE128', 32)
+        shake256 = SHAKEHash('SHAKE256', 64)
 
         measure_hash_time(sha1, data, 'SHA-1', file_name)
         measure_hash_time(sha2_224, data, 'SHA-224', file_name)
@@ -152,3 +223,9 @@ if __name__ == "__main__":
         measure_hash_time(sha2_512, data, 'SHA-512', file_name)
         measure_hash_time(md5, data, 'MD5', file_name)
         measure_hash_time(hmac, data, 'HMAC', file_name)
+        measure_hash_time(sha3_224, data, 'SHA3-224', file_name)
+        measure_hash_time(sha3_256, data, 'SHA3-256', file_name)
+        measure_hash_time(sha3_384, data, 'SHA3-384', file_name)
+        measure_hash_time(sha3_512, data, 'SHA3-512', file_name)
+        measure_hash_time(shake128, data, 'SHAKE128', file_name)
+        measure_hash_time(shake256, data, 'SHAKE256', file_name)
