@@ -37,6 +37,7 @@
                 {% if user.is_authenticated %}
                   <a class="nav-item nav-link" href="{% url 'profile' %}">Profile</a>
                   <a class="nav-item nav-link" href="{% url 'post-create' %}">New Post</a>
+                  <a class="nav-item nav-link" href="{% url 'analysis-form' %}">Analysis</a>
                   <form method="POST" action="{% url 'logout' %}" class="nav-item nav-link">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-link nav-item nav-link" style="padding: 0; border: none; background: none;">Logout</button>

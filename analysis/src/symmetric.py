@@ -17,7 +17,7 @@ import os
 import csv
 
 # Define constants
-DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'sample_text')
+DATA_DIR = os.path.join(os.path.dirname(__file__),  '..', 'data', 'sample_text')
 ANALYSIS_RESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'results', 'symmetric_analysis_results.csv')
 
 class AESEncryption:

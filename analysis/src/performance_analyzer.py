@@ -15,7 +15,7 @@ from src.asymmetric import RSAEncryption, DSAEncryption, DHEncryption, ECCEncryp
 from src.hashing import SHA1Hash, SHA2Hash, MD5Hash, HMACHash
 
 # Define constants
-DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'sample_text')
+DATA_DIR = os.path.join(os.path.dirname(__file__),  '..', 'data', 'sample_text')
 SMALLER_DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'smaller_sample_text')
 RESULTS_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'results', 'performance_data.csv')
 DEFAULT_ITERATIONS = 2

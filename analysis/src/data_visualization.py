@@ -13,7 +13,7 @@ class DataVisualization:
             "Asymmetric": ["RSAEncryption", "DSAEncryption", "DHEncryption", "ECCEncryption"],
             "Hashing": ["SHA1Hash", "SHA2Hash", "MD5Hash", "HMACHash"]
         }
-        self.base_plot_dir = os.path.join(os.path.dirname(__file__), '..', 'media', 'plots')
+        self.base_plot_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'media', 'plots')
         os.makedirs(self.base_plot_dir, exist_ok=True)
 
     def clean_algorithm_name(self, name):
