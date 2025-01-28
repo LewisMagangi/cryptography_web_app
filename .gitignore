@@ -2,4 +2,6 @@ venv_cryptography/
 .env
 
 # Ignore all .txt files in the data/sample_texts folder
-/data/sample_text/*.txt
+analysis/data/sample_text/*.txt
+analysis/data/smaller_sample_text/*.txt
+analysis/data/medium_sample_text/*.txt
