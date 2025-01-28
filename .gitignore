@@ -5,11 +5,22 @@ analysis/src/data/sample_text/*.txt
 __pycache__/
 *.py[cod]
 *.so
+*$py.class
 
 # Django
 *.log
 db.sqlite3
 db.sqlite3-journal
+media/
+static/
+migrations/__pycache__/
+
+# Project specific
+media/plots/
+media/profile_pics/
+static/admin/
+static/blog/
+media/
 
 # Local env
 .env
