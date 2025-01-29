@@ -29,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['www.liquelaliqour.tech', 'cryptography.liquelaliqour.tech', '54.234.99.63']
 
@@ -39,6 +39,7 @@ ALLOWED_HOSTS = ['www.liquelaliqour.tech', 'cryptography.liquelaliqour.tech', '5
 INSTALLED_APPS = [
     'blog.apps.BlogConfig',
     'users.apps.UsersConfig',
+    'analysis.apps.AnalysisConfig', 
     'crispy_forms',
     'crispy_bootstrap4',
     'django.contrib.admin',

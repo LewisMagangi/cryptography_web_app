@@ -1,6 +1,13 @@
+# Ignore media files
+/media/
+
+# Ignore static files
+/static/
 
 # Ignore all .txt files in the data/sample_texts folder
-analysis/src/data/sample_text/*.txt
+analysis/data/sample_text/*.txt
+data/sample_text/*.txt
+
 # Python cache
 __pycache__/
 *.py[cod]

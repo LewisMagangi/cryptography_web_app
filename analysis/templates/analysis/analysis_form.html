@@ -1,0 +1,99 @@
+{% extends "blog/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="content-section">
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Analysis Parameters</legend>
+            {{ form|crispy }}
+            
+            <!-- File Selection Section -->
+            <div class="form-group mt-3">
+                <label for="analysis_file">Select File for Analysis</label>
+                <input type="file" 
+                       class="form-control-file" 
+                       id="analysis_file" 
+                       name="analysis_file"
+                       required>
+                <!-- File Details Display -->
+                <div id="fileDetails" class="mt-2" style="display: none;">
+                    <p>File Name: <span id="fileName"></span></p>
+                    <p>File Size: <span id="fileSize"></span></p>
+                    <p>File Type: <span id="fileType"></span></p>
+                </div>
+            </div>
+        </fieldset>
+        <div class="form-group">
+            <button class="btn btn-outline-info" type="submit">Generate Analysis</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cryptoType = document.getElementById('id_crypto_type');
+        const algorithm = document.getElementById('id_algorithm');
+        const vizType = document.getElementById('id_visualization');
+        const barType = document.getElementById('id_bar_type').parentElement;
+
+        function updateAlgorithmChoices() {
+            const asymAlgos = [
+                ['rsa', 'RSA'],
+                ['dsa', 'DSA'],
+                ['ecc', 'ECC'],
+                ['dh', 'DH']
+            ];
+            const symAlgos = [
+                ['aes', 'AES'],
+                ['des', 'DES'],
+                ['3des', '3DES'],
+                ['blowfish', 'Blowfish'],
+                ['rc2', 'RC2'],
+                ['rc4', 'RC4']
+            ];
+
+            // Clear existing options
+            algorithm.innerHTML = '';
+            
+            // Add new options based on crypto type
+            const choices = cryptoType.value === 'asymmetric' ? asymAlgos : symAlgos;
+            choices.forEach(([value, label]) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = label;
+                algorithm.appendChild(option);
+            });
+        }
+
+        function updateBarTypeVisibility() {
+            barType.style.display = vizType.value === 'bar' ? 'block' : 'none';
+        }
+
+        // Event listeners
+        cryptoType.addEventListener('change', updateAlgorithmChoices);
+        vizType.addEventListener('change', updateBarTypeVisibility);
+
+        // Initial setup
+        updateAlgorithmChoices();
+        updateBarTypeVisibility();
+        
+        // File change event handler
+        const fileInput = document.getElementById('analysis_file');
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const fileDetails = document.getElementById('fileDetails');
+                const fileName = document.getElementById('fileName');
+                const fileSize = document.getElementById('fileSize');
+                const fileType = document.getElementById('fileType');
+                
+                fileName.textContent = file.name;
+                fileSize.textContent = (file.size / 1024).toFixed(2) + ' KB';
+                fileType.textContent = file.type || 'application/octet-stream';
+                fileDetails.style.display = 'block';
+            }
+        });
+    });
+</script>
+{% endblock content %}
