@@ -1,5 +1,35 @@
-venv_cryptography/
-.env
+# Ignore media files
+/media/
+
+# Ignore static files
+/static/
 
 # Ignore all .txt files in the data/sample_texts folder
-/data/sample_text/*.txt
+analysis/data/sample_text/*.txt
+data/sample_text/*.txt
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.so
+*$py.class
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
+static/
+migrations/__pycache__/
+
+# Project specific
+media/plots/
+media/profile_pics/
+static/admin/
+static/blog/
+media/
+
+# Local env
+.env
+venv/
+venv_cryptography/

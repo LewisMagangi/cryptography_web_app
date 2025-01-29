@@ -11,8 +11,8 @@ def generate_text_data(size_in_mb):
         text += text_generator.text()
     return text
 
-# Sizes to generate text data for
-sizes = [1, 2, 5, 10, 20, 50, 100]
+# Sizes to generate data for
+sizes = [1, 2, 3, 4, 5]
 
 # Generate text data for each size and save it into a separate file
 for size in sizes:
