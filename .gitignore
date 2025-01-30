@@ -9,6 +9,8 @@ analysis/data/sample_text/*.txt
 data/sample_text/*.txt
 
 # Python cache
+**/__pycache__/
+*.pyc
 __pycache__/
 *.py[cod]
 *.so
@@ -24,6 +26,7 @@ migrations/__pycache__/
 
 # Project specific
 media/plots/
+media/plots/**/*.png
 media/profile_pics/
 static/admin/
 static/blog/
