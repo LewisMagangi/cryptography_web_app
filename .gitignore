@@ -37,6 +37,6 @@ static/blog/
 
 # IDE specific files
 .vscode/
-.idea/
-*.sublime-workspace
-*.sublime-project
+
+# Local development settings
+cryptography_web_app/settings.py
