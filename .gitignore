@@ -1,5 +1,42 @@
+# Virtual environment
 venv_cryptography/
 .env
+venv/
 
-# Ignore all .txt files in the data/sample_texts folder
-/data/sample_text/*.txt
+# Sample data files
+analysis/data/sample_text/*.txt
+analysis/data/smaller_sample_text/*.txt
+analysis/data/medium_sample_text/*.txt
+data/sample_text/*.txt
+
+# Python cache files
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+**/__pycache__/
+*.py[cod]
+*.so
+*$py.class
+*.pyc
+**/*.pyc
+
+# Django files
+*.log
+*.pot
+db.sqlite3
+db.sqlite3-journal
+local_settings.py
+
+# Media and static files
+media/
+staticfiles/
+media/plots/
+media/profile_pics/
+static/admin/
+static/blog/
+
+# IDE specific files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
