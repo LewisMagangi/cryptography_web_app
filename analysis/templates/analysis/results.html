@@ -1,0 +1,17 @@
+{% extends "blog/base.html" %}
+{% block content %}
+<div class="content-section">
+    <h2>Analysis Results</h2>
+    <div class="file-details mb-4">
+        <h4>File Details</h4>
+        <p>Name: {{ analysis.file_name }}</p>
+        <p>Size: {{ analysis.file_size|floatformat:2 }} KB</p>
+        <p>Algorithm: {{ analysis.algorithm }}</p>
+        <p>Estimated Time: {{ analysis.estimated_time|floatformat:4 }} seconds</p>
+    </div>
+    
+    <div class="graph-container">
+        {{ plot_html|safe }}
+    </div>
+</div>
+{% endblock content %}
