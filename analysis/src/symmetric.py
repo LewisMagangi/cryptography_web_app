@@ -296,25 +296,34 @@ def measure_time(func):
         return end_time - start_time, result
     return wrapper
 
-def save_results(algorithm, operation, key_size, file_name, time_taken):
+def calculate_mb_rate(time_taken, filename):
+    """Calculate MB/s rate from time and filename."""
+    try:
+        size_mb = int(filename.split('_')[0].replace('mb', ''))
+        return size_mb / time_taken if time_taken > 0 else 0
+    except:
+        return 0
+
+def save_results(algorithm, operation, key_size, file_name, time_taken, rate):
     """
-    Save the time taken for an operation to a CSV file.
+    Save the time taken and rate for an operation to a CSV file.
     
-    :param algorithm: The name of the algorithm.
-    :param operation: The operation performed (e.g., encryption, decryption).
-    :param key_size: The size of the key.
-    :param file_name: The name of the file used.
-    :param time_taken: The time taken for the operation.
+    :param algorithm: The name of the algorithm
+    :param operation: The operation performed
+    :param key_size: The size of the key
+    :param file_name: The name of the file used
+    :param time_taken: The time taken for the operation
+    :param rate: Processing rate in MB/s
     """
     with open(ANALYSIS_RESULTS_PATH, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([algorithm, operation, key_size, file_name, time_taken])
+        writer.writerow([algorithm, operation, key_size, file_name, time_taken, rate])
 
 if __name__ == "__main__":
     # Initialize results file
     with open(ANALYSIS_RESULTS_PATH, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['algorithm', 'operation', 'key_size', 'file_name', 'time_taken'])
+        writer.writerow(['algorithm', 'operation', 'key_size', 'file_name', 'time_taken', 'rate'])
 
     # Test data files
     sample_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.txt')]
@@ -338,11 +347,13 @@ if __name__ == "__main__":
             try:
                 # Encryption
                 enc_time, (ciphertext, tag, nonce) = measure_time(aes.encrypt)(data)
-                save_results('AES', 'encryption', key_size, file_name, enc_time)
+                rate = calculate_mb_rate(enc_time, file_name)
+                save_results('AES', 'encryption', key_size, file_name, enc_time, rate)
                 
                 # Decryption
                 dec_time, _ = measure_time(aes.decrypt)(ciphertext, tag, nonce)
-                save_results('AES', 'decryption', key_size, file_name, dec_time)
+                rate = calculate_mb_rate(dec_time, file_name)
+                save_results('AES', 'decryption', key_size, file_name, dec_time, rate)
             except Exception as e:
                 print(f"Error during AES operation with key size {key_size} and file {file_name}: {e}")
 
@@ -352,11 +363,13 @@ if __name__ == "__main__":
         try:
             # Encryption
             enc_time, (ciphertext, iv) = measure_time(des.encrypt)(data)
-            save_results('DES', 'encryption', 8, file_name, enc_time)
+            rate = calculate_mb_rate(enc_time, file_name)
+            save_results('DES', 'encryption', 8, file_name, enc_time, rate)
             
             # Decryption
             dec_time, _ = measure_time(des.decrypt)(ciphertext, iv)
-            save_results('DES', 'decryption', 8, file_name, dec_time)
+            rate = calculate_mb_rate(dec_time, file_name)
+            save_results('DES', 'decryption', 8, file_name, dec_time, rate)
         except Exception as e:
             print(f"Error during DES operation with file {file_name}: {e}")
 
@@ -367,11 +380,13 @@ if __name__ == "__main__":
             try:
                 # Encryption
                 enc_time, (ciphertext, iv) = measure_time(triple_des.encrypt)(data)
-                save_results('3DES', 'encryption', key_size, file_name, enc_time)
+                rate = calculate_mb_rate(enc_time, file_name)
+                save_results('3DES', 'encryption', key_size, file_name, enc_time, rate)
                 
                 # Decryption
                 dec_time, _ = measure_time(triple_des.decrypt)(ciphertext, iv)
-                save_results('3DES', 'decryption', key_size, file_name, dec_time)
+                rate = calculate_mb_rate(dec_time, file_name)
+                save_results('3DES', 'decryption', key_size, file_name, dec_time, rate)
             except Exception as e:
                 print(f"Error during 3DES operation with key size {key_size} and file {file_name}: {e}")
 
@@ -382,11 +397,13 @@ if __name__ == "__main__":
             try:
                 # Encryption
                 enc_time, (ciphertext, iv) = measure_time(rc2.encrypt)(data)
-                save_results('RC2', 'encryption', key_size, file_name, enc_time)
+                rate = calculate_mb_rate(enc_time, file_name)
+                save_results('RC2', 'encryption', key_size, file_name, enc_time, rate)
                 
                 # Decryption
                 dec_time, _ = measure_time(rc2.decrypt)(ciphertext, iv)
-                save_results('RC2', 'decryption', key_size, file_name, dec_time)
+                rate = calculate_mb_rate(dec_time, file_name)
+                save_results('RC2', 'decryption', key_size, file_name, dec_time, rate)
             except Exception as e:
                 print(f"Error during RC2 operation with key size {key_size} and file {file_name}: {e}")
 
@@ -397,11 +414,13 @@ if __name__ == "__main__":
             try:
                 # Encryption
                 enc_time, ciphertext = measure_time(rc4.encrypt)(data)
-                save_results('RC4', 'encryption', key_size, file_name, enc_time)
+                rate = calculate_mb_rate(enc_time, file_name)
+                save_results('RC4', 'encryption', key_size, file_name, enc_time, rate)
                 
                 # Decryption
                 dec_time, _ = measure_time(rc4.decrypt)(ciphertext)
-                save_results('RC4', 'decryption', key_size, file_name, dec_time)
+                rate = calculate_mb_rate(dec_time, file_name)
+                save_results('RC4', 'decryption', key_size, file_name, dec_time, rate)
             except Exception as e:
                 print(f"Error during RC4 operation with key size {key_size} and file {file_name}: {e}")
 
@@ -412,11 +431,13 @@ if __name__ == "__main__":
             try:
                 # Encryption
                 enc_time, (ciphertext, iv) = measure_time(blowfish.encrypt)(data)
-                save_results('Blowfish', 'encryption', key_size, file_name, enc_time)
+                rate = calculate_mb_rate(enc_time, file_name)
+                save_results('Blowfish', 'encryption', key_size, file_name, enc_time, rate)
                 
                 # Decryption
                 dec_time, _ = measure_time(blowfish.decrypt)(ciphertext, iv)
-                save_results('Blowfish', 'decryption', key_size, file_name, dec_time)
+                rate = calculate_mb_rate(dec_time, file_name)
+                save_results('Blowfish', 'decryption', key_size, file_name, dec_time, rate)
             except Exception as e:
                 print(f"Error during Blowfish operation with key size {key_size} and file {file_name}: {e}")
 
