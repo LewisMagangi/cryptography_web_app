@@ -238,7 +238,7 @@ def measure_time(func):
         return end_time - start_time, result
     return wrapper
 
-def save_results(algorithm, operation, key_size, file_name, time_taken):
+def save_results(algorithm, operation, key_size, file_name, time_taken, rate):
     """
     Save the time taken for an operation to a CSV file.
     
@@ -247,16 +247,25 @@ def save_results(algorithm, operation, key_size, file_name, time_taken):
     :param key_size: The size of the key or curve.
     :param file_name: The name of the file used.
     :param time_taken: The time taken for the operation.
+    :param rate: The bytes/s rate for the operation.
     """
     with open(ANALYSIS_RESULTS_PATH, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([algorithm, operation, key_size, file_name, time_taken])
+        writer.writerow([algorithm, operation, key_size, file_name, time_taken, rate])
+
+def calculate_bytes_rate(time_taken, filename):
+    """Calculate bytes/s rate from time and filename."""
+    try:
+        size_bytes = int(filename.split('bytes')[0])
+        return size_bytes / time_taken if time_taken > 0 else 0
+    except:
+        return 0
 
 if __name__ == "__main__":
     # Initialize results file
     with open(ANALYSIS_RESULTS_PATH, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['algorithm', 'operation', 'key_size', 'file_name', 'time_taken'])
+        writer.writerow(['algorithm', 'operation', 'key_size', 'file_name', 'time_taken', 'rate'])
 
     # Test data files
     sample_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.txt')]
@@ -276,38 +285,43 @@ if __name__ == "__main__":
             rsa = RSAEncryption(key_size)
             
             # Encryption/Decryption
-            enc_time, encrypted = measure_time(rsa.encrypt)(data)
-            save_results('RSA', 'encryption', key_size, file_name, enc_time)
+            enc_time, ciphertext = measure_time(rsa.encrypt)(data)
+            rate = calculate_bytes_rate(enc_time, file_name)
+            save_results('RSA', 'encryption', key_size, file_name, enc_time, rate)
             
-            dec_time, decrypted = measure_time(rsa.decrypt)(encrypted)
-            save_results('RSA', 'decryption', key_size, file_name, dec_time)
+            dec_time, _ = measure_time(rsa.decrypt)(ciphertext)
+            rate = calculate_bytes_rate(dec_time, file_name)
+            save_results('RSA', 'decryption', key_size, file_name, dec_time, rate)
             
             # Signing/Verification
             sign_time, signature = measure_time(rsa.sign)(data)
-            save_results('RSA', 'signing', key_size, file_name, sign_time)
+            rate = calculate_bytes_rate(sign_time, file_name)
+            save_results('RSA', 'signing', key_size, file_name, sign_time, rate)
             
             verify_time, _ = measure_time(rsa.verify)(data, signature)
-            save_results('RSA', 'verification', key_size, file_name, verify_time)
+            rate = calculate_bytes_rate(verify_time, file_name)
+            save_results('RSA', 'verification', key_size, file_name, verify_time, rate)
 
         # DSA Tests
         for key_size in key_sizes['DSA']:
             dsa = DSAEncryption(key_size)
             
-            # Signing/Verification
             sign_time, signature = measure_time(dsa.sign)(data)
-            save_results('DSA', 'signing', key_size, file_name, sign_time)
+            rate = calculate_bytes_rate(sign_time, file_name)
+            save_results('DSA', 'signing', key_size, file_name, sign_time, rate)
             
             verify_time, _ = measure_time(dsa.verify)(data, signature)
-            save_results('DSA', 'verification', key_size, file_name, verify_time)
+            rate = calculate_bytes_rate(verify_time, file_name)
+            save_results('DSA', 'verification', key_size, file_name, verify_time, rate)
 
         # DH Tests
         for key_size in key_sizes['DH']:
             dhe = DiffieHellmanEncryption(key_size)
             
-            # Key Exchange
             dhe.run(key_size)
             exchange_time = dhe.execution_time
-            save_results('DH', 'key_exchange', key_size, file_name, exchange_time)
+            rate = calculate_bytes_rate(exchange_time, file_name)
+            save_results('DH', 'key_exchange', key_size, file_name, exchange_time, rate)
 
         # ECC Tests
         for curve in key_sizes['ECC']:
@@ -315,9 +329,11 @@ if __name__ == "__main__":
             
             # Signing/Verification
             sign_time, signature = measure_time(ecc.sign)(data)
-            save_results('ECC', 'signing', curve, file_name, sign_time)
+            rate = calculate_bytes_rate(sign_time, file_name)
+            save_results('ECC', 'signing', curve, file_name, sign_time, rate)
             
             verify_time, _ = measure_time(ecc.verify)(data, signature)
-            save_results('ECC', 'verification', curve, file_name, verify_time)
+            rate = calculate_bytes_rate(verify_time, file_name)
+            save_results('ECC', 'verification', curve, file_name, verify_time, rate)
 
         print(f"Completed analysis for {file_name}")
