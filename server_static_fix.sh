@@ -1,36 +1,24 @@
 #!/bin/bash
 
-echo "Installing whitenoise..."
+# Install whitenoise for better static file handling
 pip install whitenoise
 
-echo "Setting up directories with correct permissions..."
-# Remove existing staticfiles directory
-sudo rm -rf staticfiles
+# Clear and recreate static directories
+sudo rm -rf staticfiles/*
+mkdir -p static/blog/css static/blog/js static/admin
 
-# Create directories with proper permissions
-sudo mkdir -p staticfiles
-sudo mkdir -p static/blog/css static/blog/js static/admin
-
-# Set initial permissions
-sudo chown -R www-data:www-data staticfiles
-sudo chown -R www-data:www-data static
-sudo chmod -R 775 staticfiles
-sudo chmod -R 775 static
-
-# Add your user to www-data group (if not already done)
-sudo usermod -a -G www-data $USER
-
-echo "Collecting static files..."
+# Collect static files
 python manage.py collectstatic --no-input --clear
 
-echo "Final permission adjustments..."
+# Fix permissions
+sudo find . -type d -exec chmod 755 {} \;
+sudo find . -type f -exec chmod 644 {} \;
 sudo chown -R www-data:www-data staticfiles/
 sudo chown -R www-data:www-data static/
-sudo chmod -R 775 staticfiles/
-sudo chmod -R 775 static/
 
-echo "Restarting Apache..."
+# Restart Apache
 sudo systemctl restart apache2
 
-echo "Done! Checking Apache error log..."
+# Check for errors
+echo "Checking Apache error log..."
 sudo tail -n 20 /var/log/apache2/error.log
