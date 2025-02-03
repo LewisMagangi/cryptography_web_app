@@ -13,12 +13,9 @@ data/sample_text/*.txt
 __pycache__/
 */__pycache__/
 */*/__pycache__/
-**/__pycache__/
 *.py[cod]
 *.so
 *$py.class
-*.pyc
-**/*.pyc
 
 # Django files
 *.log
@@ -27,13 +24,26 @@ db.sqlite3
 db.sqlite3-journal
 local_settings.py
 
-# Media and static files
-media/
+# Media files - ignore contents but keep structure
+media/*
+!media/.gitkeep
+!media/plots/
+!media/profile_pics/
+media/plots/*
+!media/plots/.gitkeep
+media/profile_pics/*
+!media/profile_pics/.gitkeep
+
+# Static files - preserve structure, ignore content
+static/*
+!static/admin/
+!static/blog/
+static/blog/images/*
+!static/blog/css/
+!static/blog/js/
+
+# Collected static files
 staticfiles/
-media/plots/
-media/profile_pics/
-static/admin/
-static/blog/
 
 # IDE specific files
 .vscode/
