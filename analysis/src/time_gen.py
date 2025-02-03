@@ -65,21 +65,6 @@ class SymmetricTimeCalculator:
             'rate': rate
         }
 
-    def get_file_details(self, algorithm, file_size):
-        """Get file details structure"""
-        return {
-            'algorithm': algorithm.upper(),
-            'file_size': file_size,
-            'type': 'symmetric'
-        }
-
-    def get_time_results(self, algorithm, file_size_kb):
-        """Get time results for both operations"""
-        return {
-            'encryption': self.calculate_time(algorithm, file_size_kb, 'encryption'),
-            'decryption': self.calculate_time(algorithm, file_size_kb, 'decryption')
-        }
-
 class AsymmetricTimeCalculator:
     def __init__(self):
         self.base_path = 'analysis/data/results'
@@ -116,21 +101,6 @@ class AsymmetricTimeCalculator:
             'operation': operation,
             'estimated_time': estimated_time,
             'rate': rate
-        }
-
-    def get_file_details(self, algorithm, file_size):
-        """Get file details structure"""
-        return {
-            'algorithm': algorithm.upper(),
-            'file_size': file_size,
-            'type': 'asymmetric'
-        }
-
-    def get_time_results(self, algorithm, file_size_kb):
-        """Get time results for both operations"""
-        return {
-            'encryption': self.calculate_time(algorithm, file_size_kb, 'encryption'),
-            'decryption': self.calculate_time(algorithm, file_size_kb, 'decryption')
         }
 
 class HashingTimeCalculator:

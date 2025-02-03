@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import FormView, View
 from django.contrib.auth.decorators import login_required
@@ -55,25 +55,24 @@ class ResultsView(LoginRequiredMixin, View):
         analysis_id = request.session.get('analysis_id')
         analysis = FileAnalysis.objects.get(id=analysis_id)
         
-        # Initialize appropriate calculator based on crypto type
-        if analysis.crypto_type == 'symmetric':
-            calculator = SymmetricTimeCalculator()
-        else:
-            calculator = AsymmetricTimeCalculator()
-        
-        # Generate graph data
-        graph_gen = GraphGenerator(calculator)
-        plot_html = graph_gen.generate_graph_data(
+        calculator = SymmetricTimeCalculator()  # For now, just handling symmetric
+        time_results = calculator.calculate_time(
             algorithm=analysis.algorithm,
-            file_size=analysis.file_size * 1024  # Convert KB to bytes
+            file_size_kb=analysis.file_size
+        )
+        
+        graph_gen = GraphGenerator(calculator)
+        plot_html = graph_gen.generate_plot(
+            file_details={
+                'file_name': analysis.file_name,
+                'file_size': analysis.file_size,
+                'file_type': analysis.file_type,
+                'algorithm': analysis.algorithm
+            },
+            time_results=time_results
         )
         
         return render(request, 'analysis/results.html', {
             'plot_html': plot_html,
-            'analysis': analysis,
-            'visualization_type': analysis.visualization
+            'analysis': analysis
         })
-
-# Remove or comment out the duplicate analysis_results function since ResultsView handles this now
-# def analysis_results(request, analysis_id):
-#     ...
