@@ -29,7 +29,8 @@ RC4,encryption,16,10mb_text_data_faker.txt,0.1499009132385254,66.71073433747395
 '''
 class SymmetricTimeCalculator:
     def __init__(self):
-        self.base_path = 'analysis/data/results'
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.base_path = os.path.join(project_root, 'analysis', 'data', 'results')
         self.sym_data = pd.read_csv(os.path.join(self.base_path, 'symmetric_analysis_results.csv'))
         self.rates = self.get_rates()
 
@@ -82,7 +83,8 @@ class SymmetricTimeCalculator:
 
 class AsymmetricTimeCalculator:
     def __init__(self):
-        self.base_path = 'analysis/data/results'
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.base_path = os.path.join(project_root, 'analysis', 'data', 'results')
         self.asym_data = pd.read_csv(os.path.join(self.base_path, 'asymmetric_analysis_results.csv'))
         self.rates = self.get_rates()
 
