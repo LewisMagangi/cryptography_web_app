@@ -24,9 +24,7 @@ class AnalysisFormView(LoginRequiredMixin, FormView):
             file_type=file.content_type,
             crypto_type=form.cleaned_data['crypto_type'],
             algorithm=form.cleaned_data['algorithm'],
-            metric=form.cleaned_data['metric'],
-            visualization=form.cleaned_data['visualization'],
-            bar_type=form.cleaned_data.get('bar_type')
+            metric=form.cleaned_data['metric']
         )
         
         # Initialize appropriate calculator based on crypto type
@@ -70,8 +68,7 @@ class ResultsView(LoginRequiredMixin, View):
         
         return render(request, 'analysis/results.html', {
             'plot_html': plot_html,
-            'analysis': analysis,
-            'visualization_type': analysis.visualization
+            'analysis': analysis
         })
 
 # Remove or comment out the duplicate analysis_results function since ResultsView handles this now

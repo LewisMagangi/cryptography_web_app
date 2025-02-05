@@ -18,7 +18,7 @@ class FileAnalysisAdmin(admin.ModelAdmin):
                    'algorithm_display', 'file_size_display', 'timestamp_display', 
                    'estimated_time_display')
     
-    list_filter = ('crypto_type', 'algorithm', 'user', 'visualization', 'metric')
+    list_filter = ('crypto_type', 'algorithm', 'user', 'metric')  # Removed 'visualization'
     search_fields = ('file_name', 'user__username', 'algorithm')
     readonly_fields = ('timestamp', 'estimated_time')
     
