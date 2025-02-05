@@ -34,8 +34,6 @@
     document.addEventListener('DOMContentLoaded', function() {
         const cryptoType = document.getElementById('id_crypto_type');
         const algorithm = document.getElementById('id_algorithm');
-        const vizType = document.getElementById('id_visualization');
-        const barType = document.getElementById('id_bar_type').parentElement;
 
         function updateAlgorithmChoices() {
             const asymAlgos = [
@@ -66,17 +64,11 @@
             });
         }
 
-        function updateBarTypeVisibility() {
-            barType.style.display = vizType.value === 'bar' ? 'block' : 'none';
-        }
-
         // Event listeners
         cryptoType.addEventListener('change', updateAlgorithmChoices);
-        vizType.addEventListener('change', updateBarTypeVisibility);
 
         // Initial setup
         updateAlgorithmChoices();
-        updateBarTypeVisibility();
         
         // File change event handler
         const fileInput = document.getElementById('analysis_file');

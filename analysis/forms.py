@@ -1,4 +1,5 @@
 from django import forms
+from .models import FileAnalysis  # Keep this import
 from .constants import *
 
 class AlgorithmChoices:
@@ -14,7 +15,11 @@ class AlgorithmChoices:
     def get_symmetric_choices():
         return [(s.value, s.name) for s in SymmetricAlgo]
 
-class AnalysisForm(forms.Form):
+class AnalysisForm(forms.ModelForm):
+    class Meta:
+        model = FileAnalysis
+        fields = ['crypto_type', 'algorithm', 'metric']
+
     crypto_type = forms.ChoiceField(
         choices=AlgorithmChoices.get_crypto_choices(),
         widget=forms.Select(attrs={'class': 'form-control'}),
@@ -31,19 +36,6 @@ class AnalysisForm(forms.Form):
         choices=[(t.value, t.name.replace('_', ' ').title()) for t in MetricType],
         widget=forms.Select(attrs={'class': 'form-control'}),
         label='Analysis Metric'
-    )
-
-    visualization = forms.ChoiceField(
-        choices=[(t.value, t.name.title()) for t in VisualizationType],
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Visualization Type'
-    )
-
-    bar_type = forms.ChoiceField(
-        choices=[(t.value, t.name.title()) for t in BarChartType],
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Bar Chart Type',
-        required=False
     )
 
     def __init__(self, *args, **kwargs):
