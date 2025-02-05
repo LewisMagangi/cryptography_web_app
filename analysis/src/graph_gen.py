@@ -1,6 +1,3 @@
-import plotly.graph_objects as go
-from plotly.utils import PlotlyJSONEncoder
-from plotly.offline import plot
 from .time_gen import AsymmetricTimeCalculator, SymmetricTimeCalculator, HashingTimeCalculator 
 import pandas as pd  # Add this import if format_table uses pandas
 
