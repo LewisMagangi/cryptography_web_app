@@ -50,12 +50,29 @@
                 ['rc2', 'RC2'],
                 ['rc4', 'RC4']
             ];
+            const hashAlgos = [
+                ['sha-1', 'SHA-1'],
+                ['sha-224', 'SHA-224'],
+                ['sha-256', 'SHA-256'],
+                ['sha-384', 'SHA-384'],
+                ['sha-512', 'SHA-512'],
+                ['md5', 'MD5'],
+                ['hmac', 'HMAC']
+            ];
 
             // Clear existing options
             algorithm.innerHTML = '';
             
             // Add new options based on crypto type
-            const choices = cryptoType.value === 'asymmetric' ? asymAlgos : symAlgos;
+            let choices;
+            if (cryptoType.value === 'asymmetric') {
+                choices = asymAlgos;
+            } else if (cryptoType.value === 'symmetric') {
+                choices = symAlgos;
+            } else {
+                choices = hashAlgos;
+            }
+
             choices.forEach(([value, label]) => {
                 const option = document.createElement('option');
                 option.value = value;

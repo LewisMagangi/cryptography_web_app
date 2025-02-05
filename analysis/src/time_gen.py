@@ -1,32 +1,6 @@
 import os
 import pandas as pd
 
-'''
-algorithm,operation,key_size,file_name,time_taken,rate
-AES,encryption,16,10mb_text_data_faker.txt,0.10004687309265137,99.95314886792318
-AES,decryption,16,10mb_text_data_faker.txt,0.08319902420043945,120.19371736750706
-AES,encryption,24,10mb_text_data_faker.txt,0.10018277168273926,99.81756176269703
-AES,decryption,24,10mb_text_data_faker.txt,0.1071479320526123,93.32891273244313
-AES,encryption,32,10mb_text_data_faker.txt,0.09465885162353516,105.64252395297058
-AES,decryption,32,10mb_text_data_faker.txt,0.09807276725769043,101.96510488711478
-DES,encryption,8,10mb_text_data_faker.txt,0.31646251678466797,31.59931893862914
-DES,decryption,8,10mb_text_data_faker.txt,0.3167843818664551,31.567212818640918
-3DES,encryption,16,10mb_text_data_faker.txt,0.735008716583252,13.605280827805439
-3DES,decryption,16,10mb_text_data_faker.txt,0.8007967472076416,12.487563211101634
-3DES,encryption,24,10mb_text_data_faker.txt,1.0478672981262207,9.54319312939896
-3DES,decryption,24,10mb_text_data_faker.txt,1.3839678764343262,7.22560123704904
-RC2,encryption,5,10mb_text_data_faker.txt,0.5225744247436523,19.136030250438445
-RC2,decryption,5,10mb_text_data_faker.txt,0.34429335594177246,29.044998479991634
-RC2,encryption,8,10mb_text_data_faker.txt,0.6248273849487305,16.004420166092014
-RC2,decryption,8,10mb_text_data_faker.txt,0.34178829193115234,29.257877569470214
-RC2,encryption,16,10mb_text_data_faker.txt,0.6152565479278564,16.25338248520774
-RC2,decryption,16,10mb_text_data_faker.txt,0.3354666233062744,29.809224838651673
-RC4,encryption,5,10mb_text_data_faker.txt,0.1482982635498047,67.43167290452855
-RC4,decryption,5,10mb_text_data_faker.txt,0.17647600173950195,56.66492838363997
-RC4,encryption,8,10mb_text_data_faker.txt,0.19018149375915527,52.581351646464306
-RC4,decryption,8,10mb_text_data_faker.txt,0.15112686157226562,66.16957366786986
-RC4,encryption,16,10mb_text_data_faker.txt,0.1499009132385254,66.71073433747395
-'''
 class SymmetricTimeCalculator:
     def __init__(self):
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -54,16 +28,43 @@ class SymmetricTimeCalculator:
         if algorithm == 'BLOWFISH':
             algorithm = 'Blowfish'
             
-        file_size_mb = file_size_kb / 1024
+        file_size_mb = file_size_kb / 1024  # Convert KB to MB
         rate = self.rates.get(algorithm, {}).get(operation, 0)
         estimated_time = file_size_mb / rate if rate > 0 else 0
+        
+        # Calculate realistic intervals based on file size
+        if file_size_mb < 1:
+            base = 1  # Use 1MB as base for small files
+        else:
+            base = file_size_mb
+            
+        intervals = [
+            base * 0.4,    # 40% of base
+            base * 0.6,    # 60% of base
+            base * 0.8,    # 80% of base
+            file_size_mb,  # Actual file size
+            base * 1.2,    # 120% of base
+            base * 1.4,    # 140% of base
+            base * 1.6     # 160% of base
+        ]
+        
+        interval_times = []
+        for size in intervals:
+            if size > 0:
+                time = size / rate if rate > 0 else 0
+                interval_times.append({
+                    'size_mb': size,
+                    'estimated_time': time,
+                    'rate': rate
+                })
         
         return {
             'algorithm': algorithm,
             'file_size_kb': file_size_kb,
             'operation': operation,
             'estimated_time': estimated_time,
-            'rate': rate
+            'rate': rate,
+            'intervals': interval_times
         }
 
     def get_file_details(self, algorithm, file_size):
@@ -136,4 +137,85 @@ class AsymmetricTimeCalculator:
         }
 
 class HashingTimeCalculator:
-    pass
+    def __init__(self):
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.base_path = os.path.join(project_root, 'analysis', 'data', 'results')
+        self.hash_data = pd.read_csv(os.path.join(self.base_path, 'hashing_analysis_results.csv'))
+        # Convert column names to lowercase for consistency
+        self.hash_data.columns = self.hash_data.columns.str.lower()
+        self.rates = self.get_rates()
+
+    def get_rates(self):
+        """Calculate mean rate for each algorithm across all file sizes"""
+        rates = {}
+        grouped = self.hash_data.groupby('algorithm').agg({
+            'time_taken': 'mean',
+            'file_name': lambda x: [float(fn.split('mb_')[0]) for fn in x]
+        })
+        
+        for alg, row in grouped.iterrows():
+            avg_file_size = sum(row['file_name']) / len(row['file_name'])
+            mean_rate = avg_file_size / row['time_taken'] if row['time_taken'] > 0 else 0
+            rates[alg.upper()] = mean_rate
+        
+        return rates
+
+    def calculate_time(self, algorithm, file_size_kb, operation=None):
+        """Calculate time using mean rate from CSV."""
+        algorithm = algorithm.upper().replace('-', '')  # Normalize algorithm name
+        file_size_mb = file_size_kb / 1024  # Convert KB to MB
+        
+        # Map normalized names to CSV names
+        algo_map = {
+            'SHA1': 'SHA-1',
+            'SHA224': 'SHA-224',
+            'SHA256': 'SHA-256',
+            'SHA384': 'SHA-384',
+            'SHA512': 'SHA-512'
+        }
+        
+        lookup_name = algo_map.get(algorithm, algorithm)
+        rate = self.rates.get(lookup_name, 0)
+        estimated_time = file_size_mb / rate if rate > 0 else 0
+        
+        # Calculate intervals based on actual file size
+        base_interval = file_size_mb / 5
+        sizes = []
+        
+        # Ensure we have the actual file size in our intervals
+        if file_size_mb > 0:
+            sizes = [
+                file_size_mb * 0.4,  # 40% of file size
+                file_size_mb * 0.6,  # 60% of file size
+                file_size_mb * 0.8,  # 80% of file size
+                file_size_mb,        # 100% (actual size)
+                file_size_mb * 1.2,  # 120% of file size
+                file_size_mb * 1.4,  # 140% of file size
+                file_size_mb * 1.6   # 160% of file size
+            ]
+        
+        # Calculate times for each interval
+        interval_times = []
+        for size in sizes:
+            time = size / rate if rate > 0 else 0
+            interval_times.append({
+                'size_mb': size,
+                'estimated_time': time,
+                'rate': rate
+            })
+        
+        return {
+            'algorithm': lookup_name,
+            'file_size_kb': file_size_kb,
+            'operation': 'hashing',
+            'estimated_time': estimated_time,
+            'rate': rate,
+            'intervals': interval_times
+        }
+
+    def get_time_results(self, algorithm, file_size_kb):
+        """Get time results with intervals"""
+        result = self.calculate_time(algorithm, file_size_kb)
+        return {
+            'hashing': result
+        }

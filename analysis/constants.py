@@ -1,8 +1,9 @@
 from enum import Enum
 
 class CryptoType(Enum):
-    ASYMMETRIC = 'asymmetric'
     SYMMETRIC = 'symmetric'
+    ASYMMETRIC = 'asymmetric'
+    HASH = 'hash'
 
 class AsymmetricAlgo(Enum):
     RSA = 'rsa'
@@ -17,6 +18,15 @@ class SymmetricAlgo(Enum):
     RC2 = 'rc2'
     RC4 = 'rc4'
     BLOWFISH = 'blowfish'
+
+class HashingAlgo(Enum):
+    SHA1 = 'sha-1'  # Match the values with what's in the CSV
+    SHA224 = 'sha-224'
+    SHA256 = 'sha-256'
+    SHA384 = 'sha-384'
+    SHA512 = 'sha-512'
+    MD5 = 'md5'
+    HMAC = 'hmac'
 
 class MetricType(Enum):
     FILESIZE_TIME = 'filesize_time'
