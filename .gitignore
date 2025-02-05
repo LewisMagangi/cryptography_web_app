@@ -50,3 +50,7 @@ staticfiles/
 
 # Local development settings
 cryptography_web_app/settings.py
+
+# Analysis results files
+analysis/data/results/*
+!analysis/data/results/.gitkeep
