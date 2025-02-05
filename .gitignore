@@ -10,6 +10,7 @@ analysis/data/medium_sample_text/*.txt
 data/sample_text/*.txt
 analysis/data/smaller_sample_text/*.txt
 analysis/data/medium_sample_text/*.txt
+analysis/data/results/*.csv
 
 # Python cache
 **/__pycache__/
