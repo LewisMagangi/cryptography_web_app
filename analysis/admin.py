@@ -27,7 +27,7 @@ class FileAnalysisAdmin(admin.ModelAdmin):
             'fields': ('file_name', 'file_size', 'file_type',)
         }),
         ('Analysis Configuration', {
-            'fields': ('crypto_type', 'algorithm', 'metric', 'visualization', 'bar_type',)
+            'fields': ('crypto_type', 'algorithm', 'metric',)  # Removed visualization and bar_type
         }),
         ('Results', {
             'fields': ('estimated_time', 'timestamp',)
