@@ -9,6 +9,8 @@ ECC (Elliptic Curve Cryptography)
 import os
 import time
 import csv
+import multiprocessing
+from multiprocessing import Pool
 from Crypto.PublicKey import RSA, DSA, ECC
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import pkcs1_15, DSS
@@ -17,6 +19,7 @@ from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+import psutil  # Add this import at the top
 
 # Define constants
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'smaller_sample_text')
@@ -133,52 +136,103 @@ class DSAEncryption:
             return False
 
 class DiffieHellmanEncryption:
-    """
-    Class to perform Diffie-Hellman key exchange.
-    """
-    def __init__(self, key_size=2048):
+    """Class to perform Diffie-Hellman key exchange with CPU management."""
+    def __init__(self, key_size=2048, num_processes=None):
         """
         Initialize the Diffie-Hellman parameters and generate a key pair.
         
-        :param key_size: Size of the key in bits (default is 2048 bits).
+        :param key_size: Size of the key in bits (default is 2048 bits)
+        :param num_processes: Number of processes to use (default is optimal based on CPU cores)
         """
         self.parameters = dh.generate_parameters(generator=2, key_size=key_size, backend=default_backend())
         self.private_key = self.parameters.generate_private_key()
         self.public_key = self.private_key.public_key()
         self.name = "DiffieHellmanEncryption"
         self.execution_time = 0
-
-    def generate_shared_key(self, peer_public_key):
-        """
-        Generate a shared key using the peer's public key.
         
-        :param peer_public_key: The peer's public key.
-        :return: The derived shared key.
-        """
-        shared_key = self.private_key.exchange(peer_public_key)
-        derived_key = HKDF(
+        # For dual-core systems, always use single process
+        self.num_processes = 1
+        self.initial_cpu_usage = psutil.cpu_percent()
+        self.throttle_threshold = 70  # Lower threshold to 70%
+        self.cool_down_time = 1.0  # Increased cool down period
+        self.max_retries = 3
+
+    def _throttle_if_needed(self):
+        """Enhanced cooling period if CPU usage is too high."""
+        current_usage = psutil.cpu_percent(interval=0.1)
+        if current_usage > self.throttle_threshold:
+            cool_time = min(self.cool_down_time * (current_usage / self.throttle_threshold), 2.0)
+            print(f"CPU at {current_usage}%, cooling down for {cool_time:.1f}s...")
+            time.sleep(cool_time)
+            return True
+        return False
+
+    def _exchange_key(self, _):
+        """Single key exchange operation for parallel processing."""
+        other_private_key = self.parameters.generate_private_key()
+        other_public_key = other_private_key.public_key()
+        shared_key = self.private_key.exchange(other_public_key)
+        return HKDF(
             algorithm=hashes.SHA256(),
             length=32,
             salt=None,
             info=b'dh_key_exchange',
             backend=default_backend()
         ).derive(shared_key)
-        return derived_key
 
-    def run(self, key_size):
+    def _exchange_key_with_retry(self, i):
+        """Perform key exchange with retry mechanism."""
+        for attempt in range(self.max_retries):
+            try:
+                if self._throttle_if_needed():
+                    time.sleep(0.5)  # Additional delay between retries
+                return self._exchange_key(i)
+            except Exception as e:
+                if attempt == self.max_retries - 1:
+                    raise e
+                time.sleep(1.0)  # Delay before retry
+
+    def run(self, key_size, num_exchanges=3):  # Reduced to 3 exchanges
         """
-        Run the Diffie-Hellman key exchange process.
+        Run the Diffie-Hellman key exchange process with CPU management.
         
-        :param key_size: Size of the key in bits.
+        :param key_size: Size of the key in bits
+        :param num_exchanges: Number of key exchanges to perform in parallel (default: 3)
         """
-        # Generate the other party's Diffie-Hellman key pair
-        other_party_private_key = self.parameters.generate_private_key()
-        other_party_public_key = other_party_private_key.public_key()
-
-        # Generate shared keys
         start_time = time.time()
-        self.generate_shared_key(other_party_public_key)
+        results = []
+        
+        print(f"\nStarting DH exchange with key size {key_size}")
+        print(f"Initial CPU usage: {psutil.cpu_percent()}%")
+        
+        for i in range(num_exchanges):
+            # Check if we should proceed
+            if psutil.cpu_percent() > 90:
+                print("Warning: CPU too high, extending cool down...")
+                time.sleep(2.0)
+                
+            result = self._exchange_key_with_retry(i)
+            results.append(result)
+            
+            print(f"Exchange {i+1}/{num_exchanges} completed (CPU: {psutil.cpu_percent()}%)")
+            time.sleep(0.5)  # Minimum delay between exchanges
+        
         self.execution_time = time.time() - start_time
+        final_cpu_usage = psutil.cpu_percent()
+        
+        print(f"DH exchanges completed. Total time: {self.execution_time:.2f}s, Final CPU: {final_cpu_usage}%")
+        return results
+
+    def generate_shared_key(self, peer_public_key):
+        """Generate a shared key using the peer's public key."""
+        shared_key = self.private_key.exchange(peer_public_key)
+        return HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b'dh_key_exchange',
+            backend=default_backend()
+        ).derive(shared_key)
 
 class ECCEncryption:
     """
@@ -261,14 +315,25 @@ def calculate_bytes_rate(time_taken, filename):
     except:
         return 0
 
+def print_cpu_info():
+    """Print detailed information about CPU cores."""
+    physical_cores = psutil.cpu_count(logical=False)
+    logical_cores = psutil.cpu_count(logical=True)
+    print(f"\nCPU Information:")
+    print(f"Physical cores: {physical_cores}")
+    print(f"Logical cores: {logical_cores}")
+    print(f"Current CPU usage: {psutil.cpu_percent()}%\n")
+
 if __name__ == "__main__":
+    print_cpu_info()  # Add this line at the start of main
     # Initialize results file
     with open(ANALYSIS_RESULTS_PATH, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['algorithm', 'operation', 'key_size', 'file_name', 'time_taken', 'rate'])
 
     # Test data files
-    sample_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.txt')]
+    sample_files = sorted([f for f in os.listdir(DATA_DIR) if f.endswith('.txt')],
+                          key=lambda f: os.path.getsize(os.path.join(DATA_DIR, f)))
     key_sizes = {
         'RSA': [2048, 3072, 4096],
         'DSA': [1024, 2048, 3072],
