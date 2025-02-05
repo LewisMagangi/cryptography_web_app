@@ -5,7 +5,7 @@ from .constants import *
 class AlgorithmChoices:
     @staticmethod
     def get_crypto_choices():
-        return [(t.value, t.name.title()) for t in CryptoType]
+        return [(t.value, t.name.title()) for t in CryptoType]  # Will now include 'hash' option
     
     @staticmethod
     def get_asymmetric_choices():
@@ -14,6 +14,10 @@ class AlgorithmChoices:
     @staticmethod
     def get_symmetric_choices():
         return [(s.value, s.name) for s in SymmetricAlgo]
+
+    @staticmethod
+    def get_hash_choices():
+        return [(algo.value, algo.value.upper()) for algo in HashingAlgo]  # Use the enum instead of hardcoded values
 
 class AnalysisForm(forms.ModelForm):
     class Meta:
@@ -40,21 +44,31 @@ class AnalysisForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Set initial choices
+        # Set initial choices based on crypto type
         if self.data.get('crypto_type') == 'symmetric':
             self.fields['algorithm'].choices = AlgorithmChoices.get_symmetric_choices()
-        else:
+        elif self.data.get('crypto_type') == 'asymmetric':
             self.fields['algorithm'].choices = AlgorithmChoices.get_asymmetric_choices()
+        else:  # hash type
+            self.fields['algorithm'].choices = AlgorithmChoices.get_hash_choices()
 
     def clean(self):
         cleaned_data = super().clean()
         crypto_type = cleaned_data.get('crypto_type')
         algorithm = cleaned_data.get('algorithm')
 
+        if crypto_type == 'hash':
+            # Convert to lowercase for hash algorithms
+            algorithm = algorithm.lower() if algorithm else None
+            cleaned_data['algorithm'] = algorithm
+
         if crypto_type and algorithm:
-            valid_choices = (AlgorithmChoices.get_symmetric_choices() 
-                           if crypto_type == 'symmetric' 
-                           else AlgorithmChoices.get_asymmetric_choices())
+            if crypto_type == 'symmetric':
+                valid_choices = AlgorithmChoices.get_symmetric_choices()
+            elif crypto_type == 'asymmetric':
+                valid_choices = AlgorithmChoices.get_asymmetric_choices()
+            else:
+                valid_choices = AlgorithmChoices.get_hash_choices()
             
             valid_values = [choice[0] for choice in valid_choices]
             if algorithm not in valid_values:

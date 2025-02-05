@@ -172,11 +172,23 @@ class SHAKEHash:
         h.update(message)
         return h.hexdigest(self.output_length)
 
+def calculate_mb_rate(time_taken, data_size_bytes):
+    """Calculate MB/s rate from time and data size."""
+    size_mb = data_size_bytes / (1024 * 1024)  # Convert bytes to MB
+    return size_mb / time_taken if time_taken > 0 else 0
+
 def save_time_result(algorithm_name, file_name, total_time):
+    """Save results including calculated rate to CSV."""
+    # Extract file size from filename (e.g., '10mb_text_data_faker.txt' -> 10)
+    file_size_mb = float(file_name.split('mb_')[0])
+    file_size_bytes = file_size_mb * 1024 * 1024  # Convert MB to bytes
+    
+    # Calculate rate in MB/s
+    rate = calculate_mb_rate(total_time, file_size_bytes)
+    
     with open(ANALYSIS_RESULTS_PATH, 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([algorithm_name, file_name, total_time])
-    print(f"Time taken for {algorithm_name} with file {file_name}: {total_time:.6f} seconds")
+        writer.writerow([algorithm_name, file_name, total_time, rate])
 
 def measure_hash_time(hash_function, data, algorithm_name, file_name):
     start_time = time.time()
@@ -192,10 +204,10 @@ def load_data(file_name):
 
 # Example usage
 if __name__ == "__main__":
-    # Ensure the results file is empty before starting
+    # Initialize results file with updated header
     with open(ANALYSIS_RESULTS_PATH, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['Algorithm', 'File Name', 'Time Taken'])
+        writer.writerow(['algorithm', 'file_name', 'time_taken', 'rate'])  # lowercase headers
 
     # List of sample data files
     sample_files = [f for f in os.listdir(DATA_DIR) if f.endswith('.txt')]

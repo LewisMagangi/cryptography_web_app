@@ -53,17 +53,19 @@ class ResultsView(LoginRequiredMixin, View):
         analysis_id = request.session.get('analysis_id')
         analysis = FileAnalysis.objects.get(id=analysis_id)
         
-        # Initialize appropriate calculator based on crypto type
+        # Initialize appropriate calculator
         if analysis.crypto_type == 'symmetric':
             calculator = SymmetricTimeCalculator()
-        else:
+        elif analysis.crypto_type == 'asymmetric':
             calculator = AsymmetricTimeCalculator()
+        else:
+            calculator = HashingTimeCalculator()
         
-        # Generate graph data
+        # Pass actual file size in KB for proper interval calculation
         graph_gen = GraphGenerator(calculator)
         plot_html = graph_gen.generate_graph_data(
             algorithm=analysis.algorithm,
-            file_size=analysis.file_size * 1024  # Convert KB to bytes
+            file_size=analysis.file_size  # Already in KB
         )
         
         return render(request, 'analysis/results.html', {
