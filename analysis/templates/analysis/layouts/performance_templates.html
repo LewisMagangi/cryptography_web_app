@@ -1,12 +1,11 @@
 {% load static %}
 
 {% if template_name == 'keysize_template' %}
-    {# Key Size Analysis Template #}
     <div class="performance-analysis">
         <h4>Key Size Analysis for {{ algorithm|upper }}</h4>
         <div class="key-size-analysis mb-4">
             <div class="algorithm-details mb-3">
-                <p><strong>Input File Size:</strong> {{ file_size_bytes|floatformat:2 }} bytes ({{ file_size_kb|floatformat:2 }} KB)</p>
+                <p><strong>Input File Size:</strong> {{ file_size_bytes|floatformat:8 }} bytes ({{ file_size_kb|floatformat:8 }} KB)</p>
             </div>
             <table class="table table-striped">
                 <thead>
@@ -22,15 +21,15 @@
                     <tr>
                         <td>{{ row.key_size_label }}</td>
                         <td>{{ row.operation|title }}</td>
-                        <td class="time-cell">{{ row.estimated_time|floatformat:4 }}</td>
-                        <td class="rate-cell">{{ row.rate|floatformat:2 }}</td>
+                        <td class="time-cell">{{ row.estimated_time|floatformat:8 }}</td>
+                        <td class="rate-cell">{{ row.rate|floatformat:8 }}</td>
                     </tr>
                     {% endfor %}
                     {% if average %}
                     <tr class="table-info">
                         <td colspan="2"><strong>Overall Average</strong></td>
-                        <td class="time-cell">{{ average.time|floatformat:4 }}</td>
-                        <td class="rate-cell"><strong>{{ average.rate|floatformat:2 }}</strong></td>
+                        <td class="time-cell">{{ average.time|floatformat:8 }}</td>
+                        <td class="rate-cell"><strong>{{ average.rate|floatformat:8 }}</strong></td>
                     </tr>
                     {% endif %}
                 </tbody>
