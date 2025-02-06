@@ -155,36 +155,101 @@ class GraphGenerator:
             base_size * 1.6   # 160% of file size
         ]
         
-        html = """
-        <div class="hash-analysis">
-            <h5>Hash Performance Analysis</h5>
-            <div class="summary mb-3">
-                <p><strong>Average Processing Rate:</strong> {:.2f} MB/s</p>
-            </div>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>File Size (MB)</th>
-                        <th>Estimated Time (s)</th>
-                        <th>Rate (MB/s)</th>
-                    </tr>
-                </thead>
-                <tbody>
-        """.format(rate)
+        intervals = []
+        for size in base_intervals:
+            intervals.append({
+                'size': size,
+                'time': size / rate if rate > 0 else 0,
+                'rate': rate
+            })
+
+        context = {
+            'avg_rate': rate,
+            'intervals': intervals,
+            'template_name': 'hash_template'  # Add template name
+        }
         
-        for size in intervals:
-            estimated_time = size / rate if rate > 0 else 0
-            html += f"""
-                <tr class="performance-row">
-                    <td>{size:.2f}</td>
-                    <td class="time-cell">{estimated_time:.4f}</td>
-                    <td class="rate-cell">{rate:.2f}</td>
-                </tr>
-            """
+        return render_to_string('analysis/layouts/performance_templates.html', context)
+
+    def _prepare_keysize_row(self, stat, operation, file_size, is_asymmetric, algorithm):
+        """Prepare row data for keysize analysis."""
+        try:
+            key_size = self._convert_to_float(stat.get('key_size', 0))
+            rate = self._convert_to_float(stat.get('rate', 0))
             
-        html += """
-                </tbody>
-            </table>
-        </div>
-        """
-        return html
+            if is_asymmetric:
+                # Convert bytes/s to MB/s for asymmetric
+                mb_rate = rate / (1024 * 1024)
+                file_size_bytes = file_size * 1024
+                estimated_time = file_size_bytes / rate if rate > 0 else 0
+            else:
+                # For symmetric algorithms
+                mb_rate = rate  # Already in MB/s
+                file_size_mb = file_size / 1024
+                estimated_time = file_size_mb / rate if rate > 0 else 0
+
+            return {
+                'key_size': key_size,
+                'key_size_label': self._get_key_size_label(algorithm, key_size),
+                'operation': operation,
+                'estimated_time': estimated_time,
+                'rate': mb_rate
+            }
+        except Exception as e:
+            # Return safe default values if any calculation fails
+            return {
+                'key_size': 0,
+                'key_size_label': 'Unknown',
+                'operation': operation,
+                'estimated_time': 0,
+                'rate': 0
+            }
+
+    def _prepare_filesize_row(self, result, operation, file_size_bytes, is_asymmetric):
+        """Prepare row data for filesize analysis."""
+        raw_rate = self._convert_to_float(result.get('rate', 0))
+        
+        if is_asymmetric:
+            # For asymmetric, rate is in bytes/s
+            rate = raw_rate / (1024 * 1024)  # Convert to MB/s
+            estimated_time = file_size_bytes / raw_rate if raw_rate > 0 else 0
+        else:
+            # For symmetric, rate is already in MB/s
+            rate = raw_rate
+            file_size_mb = file_size_bytes / (1024 * 1024)
+            estimated_time = file_size_mb / rate if rate > 0 else 0
+
+        return {
+            'size_display': self._format_size(file_size_bytes),
+            'operation': operation,
+            'estimated_time': estimated_time,
+            'rate': rate
+        }
+
+    def _calculate_average(self, rates, file_size, is_asymmetric):
+        """Calculate average rate and time."""
+        if not rates:
+            return None
+            
+        avg_rate = sum(rates) / len(rates)
+        
+        if is_asymmetric:
+            file_size_bytes = file_size * 1024
+            avg_time = file_size_bytes / (avg_rate * 1024 * 1024) if avg_rate > 0 else 0
+        else:
+            file_size_mb = file_size / 1024
+            avg_time = file_size_mb / avg_rate if avg_rate > 0 else 0
+            
+        return {
+            'time': avg_time,
+            'rate': avg_rate
+        }
+
+    def _get_key_size_label(self, algorithm, size):
+        """Get formatted key size label."""
+        size = self._convert_to_float(size)
+        if algorithm.upper() == 'AES':
+            return f"{int(size * 8)} bits (AES-{int(size * 8)})"
+        elif algorithm.upper() in ['ECC', 'ECDSA']:
+            return f"Curve {size}"
+        return f"{int(size)} bits"
