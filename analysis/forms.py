@@ -20,9 +20,14 @@ class AlgorithmChoices:
         return [(algo.value, algo.value.upper()) for algo in HashingAlgo]  # Use the enum instead of hardcoded values
 
 class AnalysisForm(forms.ModelForm):
+    ANALYSIS_CHOICES = [
+        ('keysize', 'Key Size Analysis'),
+        ('filesize', 'File Size Analysis')
+    ]
+
     class Meta:
         model = FileAnalysis
-        fields = ['crypto_type', 'algorithm', 'metric']
+        fields = ['crypto_type', 'algorithm', 'analysis_type']  # Reorder fields
 
     crypto_type = forms.ChoiceField(
         choices=AlgorithmChoices.get_crypto_choices(),
@@ -36,10 +41,11 @@ class AnalysisForm(forms.ModelForm):
         label='Algorithm'
     )
 
-    metric = forms.ChoiceField(
-        choices=[(t.value, t.name.replace('_', ' ').title()) for t in MetricType],
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Analysis Metric'
+    analysis_type = forms.ChoiceField(
+        choices=ANALYSIS_CHOICES,
+        initial='filesize',
+        widget=forms.Select(attrs={'class': 'form-control'}),  # Changed to Select widget
+        label='Analysis Type'
     )
 
     def __init__(self, *args, **kwargs):
@@ -56,6 +62,10 @@ class AnalysisForm(forms.ModelForm):
         cleaned_data = super().clean()
         crypto_type = cleaned_data.get('crypto_type')
         algorithm = cleaned_data.get('algorithm')
+        analysis_type = cleaned_data.get('analysis_type')
+        
+        # Store analysis type in metric field
+        cleaned_data['metric'] = analysis_type
 
         if crypto_type == 'hash':
             # Convert to lowercase for hash algorithms
