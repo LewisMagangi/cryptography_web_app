@@ -1,0 +1,15 @@
+{% extends "blog/base.html" %}
+{% block content %}
+<div class="content-section">
+    <h2>Key Size Analysis Results</h2>
+    <div class="analysis-details mb-4">
+        <h4>Algorithm Details</h4>
+        <p><strong>Algorithm:</strong> {{ analysis.algorithm|upper }}</p>
+        <p><strong>Cryptography Type:</strong> {{ analysis.crypto_type|title }}</p>
+    </div>
+    
+    <div class="results-container">
+        {{ plot_html|safe }}
+    </div>
+</div>
+{% endblock content %}
