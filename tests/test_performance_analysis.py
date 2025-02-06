@@ -1,10 +1,10 @@
 import unittest
 import os
 import psutil
-from src.symmetric import AESEncryption, DESEncryption, DES3Encryption, RC2Encryption, RC4Encryption, BlowfishEncryption
-from src.asymmetric import RSAEncryption, DSAEncryption, DHEncryption, ECCEncryption
-from src.hashing import SHA1Hash, SHA2Hash, MD5Hash, HMACHash
-from src.performance_analyzer import PerformanceAnalyzer, PerformanceMetrics
+from analysis.src.symmetric import AESEncryption, DESEncryption, DES3Encryption, RC2Encryption, RC4Encryption, BlowfishEncryption
+from analysis.src.asymmetric import RSAEncryption, DSAEncryption, ECCEncryption
+from analysis.src.hashing import SHA1Hash, SHA2Hash, MD5Hash, HMACHash
+from analysis.src.performance_analyzer import PerformanceAnalyzer, PerformanceMetrics
 
 class TestPerformanceAnalysis(unittest.TestCase):
 
@@ -18,7 +18,8 @@ class TestPerformanceAnalysis(unittest.TestCase):
         cls.test_data = b"Sample data for encryption and hashing performance tests."
 
     def test_symmetric_encryption(self):
-        key_size = 256
+        """Test symmetric encryption with correct key size in bits"""
+        key_size = 256  # Use bits for key size, the analyzer will convert to bytes
         algo = AESEncryption
         averages = self.analyzer.analyze_algorithm("AESEncryption", algo, self.test_data, key_size)
         self.assertIsInstance(averages, dict)
