@@ -16,9 +16,9 @@ class FileAnalysisAdmin(admin.ModelAdmin):
 
     list_display = ('file_name_display', 'user_display', 'crypto_type_display', 
                    'algorithm_display', 'file_size_display', 'timestamp_display', 
-                   'estimated_time_display')
+                   'estimated_time_display', 'analysis_type_display')
     
-    list_filter = ('crypto_type', 'algorithm', 'user', 'metric')  # Removed 'visualization'
+    list_filter = ('crypto_type', 'algorithm', 'user', 'analysis_type')
     search_fields = ('file_name', 'user__username', 'algorithm')
     readonly_fields = ('timestamp', 'estimated_time')
     
@@ -27,7 +27,7 @@ class FileAnalysisAdmin(admin.ModelAdmin):
             'fields': ('file_name', 'file_size', 'file_type',)
         }),
         ('Analysis Configuration', {
-            'fields': ('crypto_type', 'algorithm', 'metric',)  # Removed visualization and bar_type
+            'fields': ('crypto_type', 'algorithm', 'analysis_type', 'visualization', 'bar_type',)
         }),
         ('Results', {
             'fields': ('estimated_time', 'timestamp',)
@@ -73,6 +73,10 @@ class FileAnalysisAdmin(admin.ModelAdmin):
         time = '{:.4f}'.format(obj.estimated_time)
         return format_html('<span style="font-family: monospace; color: #d35400;">{} s</span>', time)
     estimated_time_display.short_description = 'Estimated Time'
+
+    def analysis_type_display(self, obj):
+        return format_html('<span style="font-family: monospace;">{}</span>', obj.analysis_type)
+    analysis_type_display.short_description = 'Analysis Type'
 
     def has_add_permission(self, request):
         return False
