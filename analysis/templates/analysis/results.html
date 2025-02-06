@@ -2,18 +2,21 @@
 {% block content %}
 <div class="content-section">
     <h2>Analysis Results</h2>
-    <div class="file-details mb-4">
-        <h4>File Details</h4>
-        <p>Name: {{ analysis.file_name }}</p>
-        <p>Size: {{ analysis.file_size|floatformat:2 }} KB</p>
-        <p>Algorithm: {{ analysis.algorithm }}</p>
+    <div class="analysis-details mb-4">
+        <h4>Analysis Type: {{ analysis.analysis_type|title }}</h4>
+        <p><strong>Algorithm:</strong> {{ analysis.algorithm|upper }}</p>
+        <p><strong>Cryptography Type:</strong> {{ analysis.crypto_type|title }}</p>
+        
+        <div class="file-details mt-3">
+            <h5>File Information</h5>
+            <p><strong>Name:</strong> {{ analysis.file_name }}</p>
+            <p><strong>Size:</strong> {{ analysis.file_size|floatformat:2 }} KB 
+               ({{ analysis.file_size|floatformat:4 }} MB)</p>
+        </div>
     </div>
     
     <div class="results-container">
-        <h4>Performance Analysis</h4>
-        <div class="table-responsive">
-            {{ plot_html|safe }}
-        </div>
+        {{ plot_html|safe }}
     </div>
 
     <style>
@@ -56,6 +59,17 @@
         .hash-analysis h5 {
             color: #2d3748;
             margin-bottom: 15px;
+        }
+        .file-details {
+            border-left: 4px solid #4a90e2;
+            background-color: #f8f9fa;
+        }
+        .analysis-details {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+        .algorithm-info {
+            margin-top: 1rem;
         }
     </style>
 </div>
