@@ -4,6 +4,11 @@ from django.contrib.auth.models import User
 from .constants import CryptoType, MetricType
 
 class FileAnalysis(models.Model):
+    ANALYSIS_CHOICES = [
+        ('keysize', 'Key Size Analysis'),
+        ('filesize', 'File Size Analysis')
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     file_name = models.CharField(max_length=255)
     file_size = models.FloatField()  # in KB
@@ -13,10 +18,7 @@ class FileAnalysis(models.Model):
         choices=[(t.value, t.name) for t in CryptoType]
     )
     algorithm = models.CharField(max_length=50)
-    metric = models.CharField(
-        max_length=50,
-        choices=[(t.value, t.name) for t in MetricType]
-    )
+    analysis_type = models.CharField(max_length=20, choices=ANALYSIS_CHOICES, default='filesize')
     timestamp = models.DateTimeField(default=timezone.now)
     estimated_time = models.FloatField(null=True)
 
@@ -25,3 +27,4 @@ class FileAnalysis(models.Model):
 
     class Meta:
         verbose_name_plural = "File Analyses"
+        ordering = ['-timestamp']
