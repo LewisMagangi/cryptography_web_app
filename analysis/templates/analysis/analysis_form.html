@@ -2,25 +2,26 @@
 {% load crispy_forms_tags %}
 {% block content %}
 <div class="content-section">
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" id="analysisForm">
         {% csrf_token %}
         <fieldset class="form-group">
             <legend class="border-bottom mb-4">Analysis Parameters</legend>
-            {{ form|crispy }}
             
-            <!-- File Selection Section -->
-            <div class="form-group mt-3">
+            {{ form.crypto_type|as_crispy_field }}
+            {{ form.algorithm|as_crispy_field }}
+            {{ form.analysis_type|as_crispy_field }}
+            
+            <!-- File Selection - Always visible and required -->
+            <div class="form-group mt-3" id="file-section">
                 <label for="analysis_file">Select File for Analysis</label>
                 <input type="file" 
                        class="form-control-file" 
                        id="analysis_file" 
                        name="analysis_file"
                        required>
-                <!-- File Details Display -->
                 <div id="fileDetails" class="mt-2" style="display: none;">
-                    <p>File Name: <span id="fileName"></span></p>
-                    <p>File Size: <span id="fileSize"></span></p>
-                    <p>File Type: <span id="fileType"></span></p>
+                    <p>Selected file: <span id="fileName"></span></p>
+                    <p>Size: <span id="fileSize"></span></p>
                 </div>
             </div>
         </fieldset>
@@ -34,6 +35,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const cryptoType = document.getElementById('id_crypto_type');
         const algorithm = document.getElementById('id_algorithm');
+        const analysisType = document.getElementById('id_analysis_type');
 
         function updateAlgorithmChoices() {
             const asymAlgos = [
@@ -81,28 +83,52 @@
             });
         }
 
+        function updateAnalysisTypeVisibility() {
+            // Hide analysis type selection for hash algorithms
+            const isHash = cryptoType.value === 'hash';
+            analysisType.closest('.form-group').style.display = isHash ? 'none' : 'block';
+            
+            if (isHash) {
+                analysisType.value = 'filesize';  // Force filesize for hash
+            }
+        }
+
         // Event listeners
         cryptoType.addEventListener('change', updateAlgorithmChoices);
+        cryptoType.addEventListener('change', updateAnalysisTypeVisibility);
 
         // Initial setup
         updateAlgorithmChoices();
-        
-        // File change event handler
+        updateAnalysisTypeVisibility();
+
+        // Enhanced file input handling
         const fileInput = document.getElementById('analysis_file');
+        const fileDetails = document.getElementById('fileDetails');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+
         fileInput.addEventListener('change', function() {
             const file = this.files[0];
             if (file) {
-                const fileDetails = document.getElementById('fileDetails');
-                const fileName = document.getElementById('fileName');
-                const fileSize = document.getElementById('fileSize');
-                const fileType = document.getElementById('fileType');
-                
                 fileName.textContent = file.name;
                 fileSize.textContent = (file.size / 1024).toFixed(2) + ' KB';
-                fileType.textContent = file.type || 'application/octet-stream';
                 fileDetails.style.display = 'block';
             }
         });
     });
 </script>
+
+<style>
+    .custom-file-label {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    #file-section {
+        border: 1px solid #e3e3e3;
+        padding: 15px;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+    }
+</style>
 {% endblock content %}

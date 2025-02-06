@@ -1,0 +1,72 @@
+{% extends "blog/base.html" %}
+{% block content %}
+<div class="content-section">
+    <div class="performance-analysis">
+        <h2>File Size Analysis Results</h2>
+        <div class="analysis-details mb-4">
+            <h4>Algorithm Details</h4>
+            <p><strong>Algorithm:</strong> {{ analysis.algorithm|upper }}</p>
+            <p><strong>Cryptography Type:</strong> {{ analysis.crypto_type|title }}</p>
+            
+            <div class="file-details mt-3">
+                <h5>File Information</h5>
+                <p><strong>Name:</strong> {{ analysis.file_name }}</p>
+                <p><strong>Base Size:</strong> {{ analysis.file_size_bytes|floatformat:4 }} bytes 
+                   ({{ analysis.file_size_kb|floatformat:4 }} KB, 
+                    {{ analysis.file_size_mb|floatformat:8 }} MB)</p>
+            </div>
+        </div>
+
+        <div class="results-container">
+            {% if error %}
+                <div class="alert alert-warning">
+                    {{ error }}
+                </div>
+            {% else %}
+                <h4>Size-based Performance Analysis</h4>
+                {% if intervals %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Operation</th>
+                            <th>Size Comparison</th>
+                            <th>File Size (MB)</th>
+                            <th>Estimated Time (s)</th>
+                            <th>Processing Rate (MB/s)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for interval in intervals %}
+                        <tr class="interval-row {% if interval.is_base_size %}table-primary{% endif %}">
+                            <td>{{ interval.operation|title }}</td>
+                            <td>{{ interval.comparison_label }}</td>
+                            <td>{{ interval.size_mb|floatformat:8 }}</td>
+                            <td class="time-cell">{{ interval.estimated_time|floatformat:8 }}</td>
+                            <td class="rate-cell">{{ interval.rate|floatformat:4 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="alert alert-info">
+                    No performance data available for the selected parameters.
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .time-cell { color: #744210; }
+    .rate-cell { color: #2c5282; }
+    .file-details {
+        border-left: 4px solid #4a90e2;
+        padding: 10px;
+        background-color: #f8f9fa;
+    }
+    .table-primary {
+        background-color: #cce5ff !important;
+    }
+</style>
+{% endblock content %}
