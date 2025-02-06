@@ -2,7 +2,7 @@ import unittest
 import os
 import time
 import csv
-from src.hashing import SHA1Hash, SHA2Hash, MD5Hash, HMACHash
+from analysis.src.hashing import SHA1Hash, SHA2Hash, MD5Hash, HMACHash
 
 class TestHashingAlgorithms(unittest.TestCase):
     """

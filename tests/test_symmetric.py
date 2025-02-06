@@ -1,5 +1,5 @@
 import unittest
-from src.symmetric import AESEncryption, DESEncryption, DES3Encryption, RC2Encryption, RC4Encryption, BlowfishEncryption
+from analysis.src.symmetric import AESEncryption, DESEncryption, DES3Encryption, RC2Encryption, RC4Encryption, BlowfishEncryption
 
 class TestSymmetricEncryption(unittest.TestCase):
     """
@@ -27,8 +27,8 @@ class TestSymmetricEncryption(unittest.TestCase):
         Test DES encryption and decryption.
         """
         des = DESEncryption()
-        ciphertext = des.encrypt(self.plaintext)
-        decrypted_text = des.decrypt(ciphertext)
+        ciphertext, iv = des.encrypt(self.plaintext)
+        decrypted_text = des.decrypt(ciphertext, iv)
         self.assertEqual(self.plaintext, decrypted_text)
 
     def test_des3_encryption(self):
@@ -36,8 +36,8 @@ class TestSymmetricEncryption(unittest.TestCase):
         Test 3DES encryption and decryption.
         """
         des3 = DES3Encryption()
-        ciphertext = des3.encrypt(self.plaintext)
-        decrypted_text = des3.decrypt(ciphertext)
+        ciphertext, iv = des3.encrypt(self.plaintext)
+        decrypted_text = des3.decrypt(ciphertext, iv)
         self.assertEqual(self.plaintext, decrypted_text)
 
     def test_rc2_encryption(self):
@@ -45,8 +45,8 @@ class TestSymmetricEncryption(unittest.TestCase):
         Test RC2 encryption and decryption.
         """
         rc2 = RC2Encryption()
-        ciphertext = rc2.encrypt(self.plaintext)
-        decrypted_text = rc2.decrypt(ciphertext)
+        ciphertext, iv = rc2.encrypt(self.plaintext)
+        decrypted_text = rc2.decrypt(ciphertext, iv)
         self.assertEqual(self.plaintext, decrypted_text)
 
     def test_rc4_encryption(self):
@@ -63,8 +63,8 @@ class TestSymmetricEncryption(unittest.TestCase):
         Test Blowfish encryption and decryption.
         """
         blowfish = BlowfishEncryption()
-        ciphertext = blowfish.encrypt(self.plaintext)
-        decrypted_text = blowfish.decrypt(ciphertext)
+        ciphertext, iv = blowfish.encrypt(self.plaintext)
+        decrypted_text = blowfish.decrypt(ciphertext, iv)
         self.assertEqual(self.plaintext, decrypted_text)
 
 if __name__ == '__main__':

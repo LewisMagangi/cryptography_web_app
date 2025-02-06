@@ -11,7 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import specific algorithms directly
 from src.symmetric import AESEncryption, DESEncryption, DES3Encryption, RC2Encryption, RC4Encryption, BlowfishEncryption
-from src.asymmetric import RSAEncryption, DSAEncryption, DHEncryption, ECCEncryption
+from src.asymmetric import RSAEncryption, DSAEncryption, ECCEncryption  # Remove DiffieHellman
 from src.hashing import SHA1Hash, SHA2Hash, MD5Hash, HMACHash
 
 # Define constants
@@ -88,9 +88,6 @@ class PerformanceAnalyzer:
         self.signing_algorithms = {
             "DSAEncryption", "ECCEncryption"
         }
-        self.key_exchange_algorithms = {
-            "DHEncryption"
-        }
         self.algorithms = {
             "AESEncryption": AESEncryption,
             "DESEncryption": DESEncryption,
@@ -100,12 +97,19 @@ class PerformanceAnalyzer:
             "BlowfishEncryption": BlowfishEncryption,
             "RSAEncryption": RSAEncryption,
             "DSAEncryption": DSAEncryption,
-            "DHEncryption": DHEncryption,
             "ECCEncryption": ECCEncryption,
             "SHA1Hash": SHA1Hash,
             "SHA2Hash": SHA2Hash,
             "MD5Hash": MD5Hash,
             "HMACHash": HMACHash,
+        }
+        self.key_size_conversion = {
+            "AESEncryption": lambda x: x // 8,  # Convert bits to bytes (e.g., 256 bits -> 32 bytes)
+            "DESEncryption": lambda x: x // 8,
+            "DES3Encryption": lambda x: x // 8,
+            "RC2Encryption": lambda x: x // 8,
+            "RC4Encryption": lambda x: x // 8,
+            "BlowfishEncryption": lambda x: x // 8,
         }
         self.data = []
 
@@ -117,7 +121,7 @@ class PerformanceAnalyzer:
             list: A list of file paths for data files in the data directory.
         """
          # Use SMALLER_DATA_DIR for asymmetric algorithms, otherwise use the regular DATA_DIR
-        if algo_name in ["RSAEncryption", "DSAEncryption", "DHEncryption", "ECCEncryption"]:
+        if algo_name in ["RSAEncryption", "DSAEncryption", "ECCEncryption"]:
             data_dir = SMALLER_DATA_DIR
         else:
             data_dir = self.data_dir
@@ -139,12 +143,17 @@ class PerformanceAnalyzer:
             dict: A dictionary containing average performance metrics.
         """
         metrics = PerformanceMetrics()
+        
+        # Convert key size from bits to bytes for symmetric algorithms at the start
+        if algo_name in self.key_size_conversion and key_size:
+            key_size = self.key_size_conversion[algo_name](key_size)
+
         for _ in range(metrics.iterations):
             start_time = time.time()
             start_cpu = psutil.cpu_percent(interval=None)
             start_ram = psutil.virtual_memory().percent
 
-            # Execute algorithm functions
+            # Initialize algorithm with converted key size
             no_key_size_algorithms = ["DESEncryption"]
             if algo_class.__name__ in no_key_size_algorithms:
                 algo_instance = algo_class()
@@ -155,14 +164,6 @@ class PerformanceAnalyzer:
                 encrypted_data = algo_instance.encrypt(data)  # For encryption algorithms
             elif algo_name in self.signing_algorithms:
                 signed_data = algo_instance.sign(data.decode())
-            elif algo_name in self.key_exchange_algorithms:
-                # Generate the other party's Diffie-Hellman key pair
-                other_party_private_key = algo_instance.parameters.generate_private_key()
-                other_party_public_key = other_party_private_key.public_key()
-
-                # Pass the other party's public key (which is a DHPublicKey object) to generate the shared key
-                shared_key = algo_instance.generate_shared_key(other_party_public_key)
-                # Ensure shared_key is not returned here, as it's not needed for performance metrics
 
             metrics.record_iteration(start_time, start_cpu, start_ram)
 

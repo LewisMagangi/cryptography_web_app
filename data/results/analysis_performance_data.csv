@@ -1,0 +1,5 @@
+algo_name,data_size,file_name,time_taken
+SHA-224,58,test.txt,0.0
+SHA-256,58,test.txt,0.0
+SHA-384,58,test.txt,0.0010035037994384766
+SHA-512,58,test.txt,0.0

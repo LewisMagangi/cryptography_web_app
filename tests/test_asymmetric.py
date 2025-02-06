@@ -1,5 +1,5 @@
 import unittest
-from src.asymmetric import RSAEncryption, DSAEncryption, DHEncryption, ECCEncryption
+from analysis.src.asymmetric import RSAEncryption, DSAEncryption, ECCEncryption
 
 class TestAsymmetricEncryption(unittest.TestCase):
     """
@@ -33,14 +33,9 @@ class TestAsymmetricEncryption(unittest.TestCase):
     def test_dh_key_exchange(self):
         """
         Test Diffie-Hellman key exchange.
-        
-        dh1 = DHEncryption()
-        dh2 = DHEncryption()
-        shared_key1 = dh1.generate_shared_key(dh2.public_key)
-        shared_key2 = dh2.generate_shared_key(dh1.public_key)
-        self.assertEqual(shared_key1, shared_key2)
+        Note: Currently skipped as DHEncryption is not implemented
         """
-        pass
+        self.skipTest("DiffieHellman test skipped")
 
     def test_ecc_signing(self):
         """
